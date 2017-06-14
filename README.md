@@ -1,20 +1,20 @@
 # eBaghet
 open source electronic baghet (italian bagpipe) project for Arduino
 
-Largely based on eChanter by Tim Malcolm 2010-2015 CC by-nc-sa. (http://www.echanter.com/, https://sourceforge.net/projects/echanter/)
+Largely based on eChanter by Tim Malcolm 2010-2015 CC by-nc-sa. ([echanter site](http://www.echanter.com/), [sourceforge repository](https://sourceforge.net/projects/echanter/))
 
-Audio based on the Mozzi Synth libraries and examples (http://sensorium.github.com/Mozzi/)
+Audio based on the Mozzi Synth libraries and examples
 Mozzi, Tim Barrass 2012, CC by-nc-sa.
 
-Sound for the Baghet is provided by Valter Biella http://www.baghet.it/
+Sound for the Baghet is provided by [Valter Biella](http://www.baghet.it/)
 
 ## Build instruction:
-For now, follow the excellent guide at http://www.echanter.com/home/howto-build.
+For now, follow the excellent guide at [echanter site](http://www.echanter.com/home/howto-build).
 
 ## To program the Arduino:
-Download and install the Arduino IDE https://www.arduino.cc/en/main/software (tested on version 1.8.3)
+Download and install the [Arduino IDE](https://www.arduino.cc/en/main/software) (tested on version 1.8.3)
 
-Dowload and install the Mozzi library from http://sensorium.github.com/Mozzi/
+Dowload and install the Mozzi library from [Mozzi site](http://sensorium.github.com/Mozzi/)
 
 Open the Mozzi config file [Arduino dir]/libraries/Mozzi/mozzi_config.h
 If you're using HIFI mode, find the line that says AUDIO_MODE and make sure the section of code looks like this:
