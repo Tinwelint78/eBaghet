@@ -1,7 +1,1 @@
 theme: jekyll-theme-slate
-show_drafts: true
-
-download:
-  source: https://github.com/Tinwelint78/eBaghet/archive/v0.1-alpha.zip
-  dist: https://github.com/Tinwelint78/eBaghet/archive/v0.1-alpha.zip
-
