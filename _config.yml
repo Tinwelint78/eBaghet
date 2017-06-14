@@ -1,2 +1,5 @@
 theme: jekyll-theme-merlot
 show_drafts: true
+
+download:
+  source: https://github.com/Tinwelint78/eBaghet/archive/v0.1-alpha.zip
