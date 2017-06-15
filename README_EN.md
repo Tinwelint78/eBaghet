@@ -64,3 +64,17 @@ The eBaghet has several working mode depending on which keys you close when you 
 * If you close High G key, a standard intonation drone sound, both with Baghet and Highland Bagpipe.
 * If you close F key in combination with high G, add to Baghet a drone toned to A, without minor drone. No effect on Highland Bagpipe.
 * If you close E key in combination with high G, add to Baghet a drone toned to C, without minor drone. No effect on Highland Bagpipe. 
+
+
+## Fingering
+
+Great Highland Bagpipe follow this finger chart:
+
+![GHB](docs/GHB.png)
+
+
+For the Baghet, follow this finger chart (According to [Manuale del Baghet](http://www.baghet.it/manuale%20baghet%202012.pdf) by Valter Biella):
+
+![Baghet](docs/Baghet.png)
+
+Dashed keys can be closed or open as comfort of position needs.
