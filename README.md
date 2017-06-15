@@ -1,4 +1,5 @@
 # eBaghet
+[italiano](README_IT.md)
 open source electronic baghet (italian bagpipe) project for Arduino
 
 Largely based on eChanter by Tim Malcolm 2010-2015 CC by-nc-sa. ([echanter site](http://www.echanter.com/), [sourceforge repository](https://sourceforge.net/projects/echanter/))
