@@ -68,3 +68,12 @@ l'eBaghet ha diverse opzioni, selezionabili chiudendo alcuni tasti all'acensione
 ## Diteggiatura
 
 La cornamusa scozzese segue questa diteggiatura:
+
+![GHB](docs/GHB.png)
+
+
+Il Baghet segue questa diteggiatura (rilevata dal [Manuale del Baghet](http://www.baghet.it/manuale%20baghet%202012.pdf) di Valter Biella):
+
+![Baghet](docs/Baghet.png)
+
+I tasti tratteggiati possono essere chiusi o aperti, a seconda della comodità di posizione.
