@@ -1,66 +1,70 @@
 # eBaghet
-[Italiano](README_IT.md)
+[English](README_EN.md)
 
-Open source electronic baghet (italian bagpipe) project for Arduino.
+Progetto open souce di Baghet (cornamusa bergamasca) elettronica per Arduino.
 
-Largely based on eChanter by Tim Malcolm 2010-2015 CC by-nc-sa. ([echanter site](http://www.echanter.com/), [sourceforge repository](https://sourceforge.net/projects/echanter/))
+Largamente basato su eChanter di Tim Malcolm 2010-2015 CC by-nc-sa. ([sito di eChanter](http://www.echanter.com/), [repository su Sourceforge](https://sourceforge.net/projects/echanter/))
 
-Audio based on the Mozzi Synth libraries and examples
+Audio basato sulla libreria e sugli esempi di Mozzi Synth
 Mozzi, Tim Barrass 2012, CC by-nc-sa.
 
-Sound for the Baghet is provided by [Valter Biella](http://www.baghet.it/)
+Il suono della Baghet è stato fornito e registrato da [Valter Biella](http://www.baghet.it/)
 
-## Build instruction:
-For now, follow the excellent guide at [echanter site](http://www.echanter.com/home/howto-build).
+## Istruzioni di montaggio:
+Per ora, seguite l'eccellente guida sul [sito di eChanter](http://www.echanter.com/home/howto-build).
 
-## To program the Arduino:
-Download and install the [Arduino IDE](https://www.arduino.cc/en/main/software) (tested on version 1.8.3)
+## Per programmare l'Arduino:
+Scaricate e installate il programma [Arduino IDE](https://www.arduino.cc/en/main/software) (tested on version 1.8.3)
 
-Dowload and install the Mozzi library from [Mozzi site](http://sensorium.github.com/Mozzi/)
+Scaricate e installate la libreria Mozzi dal [sito di Mozzi](http://sensorium.github.com/Mozzi/)
 
-Open the Mozzi config file [Arduino dir]/libraries/Mozzi/mozzi_config.h
-If you're using HIFI mode, find the line that says AUDIO_MODE and make sure the section of code looks like this:
+Aprite il file di configurazione della libreria Mozzi [Arduino dir]/libraries/Mozzi/mozzi_config.h
+Se state usando la moodalità HIFI, trovate le linee che contengono AUDIO_MODE e assicuratevi che siano così:
 
           //#define AUDIO_MODE STANDARD
           //#define AUDIO_MODE STANDARD_PLUS
           #define AUDIO_MODE HIFI
 
-Scroll down to AUDIO_RATE and make sure the section of code looks like this
+Andate alle linee che contengono AUDIO_RATE e assicuratevi che siano così:
 
           //#define AUDIO_RATE 16384
           #define AUDIO_RATE 32768
 
-Save mozzi_config.h
+Salvate mozzi_config.h
 
 
-Start the Arduino IDE
-Open the ebaghet sketch from wherever it was unziped (eBaghet.ino is the main sketch)
+Aprite il programma Arduino IDE.
+Aprite lo sketch eBaghet da dove l'avete estratto (eBaghet.ino è lo sketch principale).
 
-At this point there are a few things that can be changed in the config file. To edit the file click on the 'eBaghet_config' file tab in the Arduino IDE. If you did not use captouch style sensors change the line
+A questo punto ci sono alcune cose che potete cambiare nel file di configurazione. Per modificare il file, cliccate sulla linguetta 'eBaghet_config' nell'Arduino IDE. Se non state usando i sensori capacitivi, cambiate la linea
 
       #define CAPTOUCH true
 
- to
+ in
 
       #define CAPTOUCH false
 
-If you did use captouch style sensors, then at some point you may want to change the 6 on this line
+Se state usando i sensori capacitivi, allora potreste dover cambiare la sensibilità dei sensori in questa linea:
 
     #define CAPTOUCH_TRIGGER 6
 
-to something a little higher or lower, depending on how the finger detection works for you. For me, 6 is a good trigger level, but 8 also works OK.
+cambiando il 6 in un valore più alto o più basso a seconda di come funziona il riconoscimento del tocco.
 
-Connect the Arduino
-Select the board type from the Tools menu (eg Arduino nano)
-Select the processor type from the Tools menu (eg ATMega 328)
-Select the Serial port from the Tools menu
-Upload the sketch
+Connettete la scheda Arduino.
+Selezionate la scheda dal menù strumenti (es. Arduino nano).
+Selezionate il processore dal menù Strumenti (es. ATMega 328).
+Selezionate la porta seriale dal menù strumenti.
+Cliccate su "Carica".
 
-## Options
+## Opzioni
 
-The eBaghet has several working mode depending on which keys you close when you turn on the chanter:
-* If you don't close any key the chanter has baghet fingering and sound without drones.
-* If you close High A key, the chanter has Highland Bagpipe fingering and sound without drones.
-* If you close High G key, a standard intonation drone sound, both with Baghet and Highland Bagpipe.
-* If you close F key in combination with high G, add to Baghet a drone toned to A, without minor drone. No effect on Highland Bagpipe.
-* If you close E key in combination with high G, add to Baghet a drone toned to C, without minor drone. No effect on Highland Bagpipe. 
+l'eBaghet ha diverse opzioni, selezionabili chiudendo alcuni tasti all'acensione:
+* Se non si chiude nessun tasto, il chanter parte con il suono e la diteggiatura del Baghet (in SOL), senza bordoni.
+* Se si chiude il tasto posterione (LA alto nella cornamusa), il chanter parte con il suono e la diteggiatura della cornamusa scozzese, senza bordoni.
+* Se si chiude il primo tasto in alto (SOL alto nella cornamusa), nel baghet vengono aggiunti i due bordoni (intonati in SOL), e nella cornamusa i tre bordoni (intonati in LA).
+* Se si chiude il secondo tasto in alto (FA nella cornamusa), in aggiunta al primo, solo nel baghet viene intonato il bordone maggiore sul LA, senza bordone minore.
+* Se si chiude il terzo tasto in alto (MI nella cornamusa), in aggiunta al primo, solo nel baghet viene intonato il bordone maggiore sul DO, senza bordone minore.
+
+## Diteggiatura
+
+La cornamusa scozzese segue questa diteggiatura:
