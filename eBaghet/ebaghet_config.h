@@ -45,7 +45,7 @@
 #define BGT 200
 
 #define CAPTOUCH true
-#define CAPTOUCH_TRIGGER 6
+#define CAPTOUCH_TRIGGER 4
 
 int num_sensors = 8;
 int sensor_pins[] = {12,8,7,6,5,4,3,2};

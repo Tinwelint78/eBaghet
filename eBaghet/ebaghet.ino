@@ -48,7 +48,7 @@ Sample <DRONE_MAJ_NUM_CELLS_BGT, AUDIO_RATE>dronemajBGT(DRONE_MAJ_DATA_BGT);
 
 int curr_sensor = 0;
 
-byte fmap = 0;  //D2-D7 (bits 2,3,4,5,6,7)
+byte fmap = 0;
 int i, j, k = 0; //general counters
 int note_detected = 0;
 int note_playing = 0;
@@ -404,53 +404,99 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   }
   else if (*pin & bitmask) {
     cycles =  1;
+#if (CAPTOUCH_TRIGGER == 1)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles =  2;
+#if (CAPTOUCH_TRIGGER == 2)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles =  3;
+#if (CAPTOUCH_TRIGGER == 3)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles =  4;
+#if (CAPTOUCH_TRIGGER == 4)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles =  5;
+#if (CAPTOUCH_TRIGGER == 5)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles =  6;
+#if (CAPTOUCH_TRIGGER == 6)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles =  7;
+#if (CAPTOUCH_TRIGGER == 7)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles =  8;
+#if (CAPTOUCH_TRIGGER == 8)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles =  9;
+#if (CAPTOUCH_TRIGGER == 9)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles = 10;
+#if (CAPTOUCH_TRIGGER == 10)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles = 11;
+#if (CAPTOUCH_TRIGGER == 11)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles = 12;
+#if (CAPTOUCH_TRIGGER == 12)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles = 13;
+#if (CAPTOUCH_TRIGGER == 13)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles = 14;
+#if (CAPTOUCH_TRIGGER == 14)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles = 15;
+#if (CAPTOUCH_TRIGGER == 15)
+	goto exit;
+#endif
   }
   else if (*pin & bitmask) {
     cycles = 16;
   }
 
+exit:
   // Discharge the pin again by setting it low and output
   //  It's important to leave the pins low if you want to
   //  be able to touch more than 1 sensor at a time - if
