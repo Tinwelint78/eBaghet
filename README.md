@@ -36,7 +36,8 @@ Salvate mozzi_config.h
 Aprite il programma Arduino IDE.
 Aprite lo sketch eBaghet da dove l'avete estratto (eBaghet.ino è lo sketch principale).
 
-A questo punto ci sono alcune cose che potete cambiare nel file di configurazione. Per modificare il file, cliccate sulla linguetta 'eBaghet_config' nell'Arduino IDE. Se non state usando i sensori capacitivi, cambiate la linea
+A questo punto ci sono alcune cose che potete cambiare nel file di configurazione. Per modificare il file, cliccate sulla linguetta 'eBaghet_config' nell'Arduino IDE. 
+Se non state usando i sensori capacitivi, cambiate la linea
 
       #define CAPTOUCH true
 

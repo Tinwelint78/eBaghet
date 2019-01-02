@@ -24,27 +24,55 @@
       D9 in standard mode
       D9 + D10 in HIFI mode
 
-	use HA (HG) sensor while turning on to select GHB instead of Baghet
-	use HG (HF#) sensor to turn on drone sounds (standard)
-	use F (E) sensor in combination with HG to tone low drone to A (Baghet only)
-	use E (D) sensor in combinaton with HG to tone low drone to C (Baghet only)
-
 */
 
 #include <MozziGuts.h>
+#if IS_STM32()
+#include "Sample16.h" // Sample template
+#else
 #include <Sample.h> // Sample template
+#endif
+
 
 #include "ebaghet_config.h"
 #include "ghb.h"
 #include "baghet.h"
+#include "border.h"
+#include "smallpipe.h"
+#include "uillean.h"
+
+#if (TOUCHMODE == TOUCH_MP121)
+#include <Wire.h>
+#include <Adafruit_MPR121.h>
+#endif
 
 #define CONTROL_RATE 256 //512 // 64 // powers of 2 please
 
-Sample <INST_NUM_CELLS_GHB, AUDIO_RATE>instrumentGHB(INST_DATA_GHB);
-Sample <DRONE_NUM_CELLS, AUDIO_RATE>drone(DRONE_DATA);
-Sample <INST_NUM_CELLS_BGT, AUDIO_RATE>instrumentBGT(INST_DATA_BGT);
-Sample <DRONE_MIN_NUM_CELLS_BGT, AUDIO_RATE>droneminBGT(DRONE_MIN_DATA_BGT);
-Sample <DRONE_MAJ_NUM_CELLS_BGT, AUDIO_RATE>dronemajBGT(DRONE_MAJ_DATA_BGT);
+#if IS_STM32()
+Sample16 <INST_NUM_CELLS_GHB, AUDIO_RATE>instrumentGHB ( INST_DATA_GHB );
+Sample16 <DRONE_NUM_CELLS_GHB, AUDIO_RATE>droneGHB ( DRONE_DATA_GHB );
+Sample16 <INST_NUM_CELLS_BGT, AUDIO_RATE>instrumentBGT ( INST_DATA_BGT );
+Sample16 <DRONE_MIN_NUM_CELLS_BGT, AUDIO_RATE>droneminBGT ( DRONE_MIN_DATA_BGT );
+Sample16 <DRONE_MAJ_NUM_CELLS_BGT, AUDIO_RATE>dronemajBGT ( DRONE_MAJ_DATA_BGT );
+Sample16 <INST_NUM_CELLS_BRD, AUDIO_RATE>instrumentBRD ( INST_DATA_BRD );
+Sample16 <DRONE_NUM_CELLS_BRD, AUDIO_RATE>droneBRD ( DRONE_DATA_BRD );
+Sample16 <INST_NUM_CELLS_SML, AUDIO_RATE>instrumentSML ( INST_DATA_SML );
+Sample16 <DRONE_NUM_CELLS_SML, AUDIO_RATE>droneSML ( DRONE_DATA_SML );
+Sample16 <INST_NUM_CELLS_UIL, AUDIO_RATE>instrumentUIL ( INST_DATA_UIL );
+Sample16 <DRONE_NUM_CELLS_UIL, AUDIO_RATE>droneUIL ( DRONE_DATA_UIL );
+#else
+Sample <INST_NUM_CELLS_GHB, AUDIO_RATE>instrumentGHB ( INST_DATA_GHB );
+Sample <DRONE_NUM_CELLS_GHB, AUDIO_RATE>droneGHB ( DRONE_DATA_GHB );
+Sample <INST_NUM_CELLS_BGT, AUDIO_RATE>instrumentBGT ( INST_DATA_BGT );
+Sample <DRONE_MIN_NUM_CELLS_BGT, AUDIO_RATE>droneminBGT ( DRONE_MIN_DATA_BGT );
+Sample <DRONE_MAJ_NUM_CELLS_BGT, AUDIO_RATE>dronemajBGT ( DRONE_MAJ_DATA_BGT );
+Sample <INST_NUM_CELLS_BRD, AUDIO_RATE>instrumentBRD ( INST_DATA_BRD );
+Sample <DRONE_NUM_CELLS_BRD, AUDIO_RATE>droneBRD ( DRONE_DATA_BRD );
+Sample <INST_NUM_CELLS_SML, AUDIO_RATE>instrumentSML ( INST_DATA_SML );
+Sample <DRONE_NUM_CELLS_SML, AUDIO_RATE>droneSML ( DRONE_DATA_SML );
+Sample <INST_NUM_CELLS_UIL, AUDIO_RATE>instrumentUIL ( INST_DATA_UIL );
+Sample <DRONE_NUM_CELLS_UIL, AUDIO_RATE>droneUIL ( DRONE_DATA_UIL );
+#endif
 
 int curr_sensor = 0;
 
@@ -52,461 +80,1306 @@ byte fmap = 0;
 int i, j, k = 0; //general counters
 int note_detected = 0;
 int note_playing = 0;
-int instrument = BGT;
+int instrument = STARTING_INSTRUMENT;
+byte usedrones = STARTING_DRONES;
+byte droneintonation = STARTING_DRONE_INT;
 
-#define DRONE_OFF		0
-#define DRONE_STANDARD	1
-#define DRONE_A			2
-#define DRONE_C			3
-byte usedrones = 0;
-
-void setup() {
-
-#if CAPTOUCH
-#else
-  pinMode(2, INPUT); pinMode(3, INPUT); pinMode(4, INPUT); pinMode(5, INPUT);
-  pinMode(6, INPUT); pinMode(7, INPUT); pinMode(8, INPUT); pinMode(12, INPUT);
+#if (TOUCHMODE == TOUCH_MP121)
+Adafruit_MPR121 cap = Adafruit_MPR121();
+#ifndef _BV
+#define _BV(bit) (1 << (bit))
+#endif
 #endif
 
-  instrument = BGT;
-  usedrones = DRONE_OFF;
-
-#if CAPTOUCH // compiler didn't like narrower defs so we have code repetition :(
-  if (readCapacitivePin(sensor_pins[0]) >= CAPTOUCH_TRIGGER) { /* HA (HG) sensor touched */
-    instrument = GHB;
-
-  }
-#else
-  if (digitalRead(sensor_pins[0]) == LOW) {  /* HA (HG) sensor touched */
-    instrument = GHB;
-  }
+// prototypes definition (to correct a VisualMicro bug)
+void set_freqs ( void );
+#if (TOUCHMODE == TOUCH_CAP)
+uint8_t readCapacitivePin ( int pinToMeasure );
 #endif
 
-#if CAPTOUCH // compiler didn't like narrower defs so we have code repetition :(
-  if (readCapacitivePin(sensor_pins[1]) >= CAPTOUCH_TRIGGER) { /* HG (HF#) sensor touched */
-    if (readCapacitivePin(sensor_pins[2]) >= CAPTOUCH_TRIGGER) { /* F (E) sensor touched */
-      usedrones = DRONE_A;
-    } else if (readCapacitivePin(sensor_pins[3]) >= CAPTOUCH_TRIGGER) { /* E (D) sensor touched */
-      usedrones = DRONE_C;
-    } else {
-      usedrones = DRONE_STANDARD;
-    }
-  }
-#else
-  if (digitalRead(sensor_pins[1]) == LOW) {  /* HG (HF#) sensor touched */
-    if (digitalRead(sensor_pins[2]) == LOW) { /* F (E) sensor touched */
-      usedrones = DRONE_A;
-    } else if (digitalRead(sensor_pins[3]) == LOW) { /* E (D) sensor touched */
-      usedrones = DRONE_C;
-    } else {
-      usedrones = DRONE_STANDARD;
-    }
-  }
+void setup()
+{
+#if (TOUCHMODE == TOUCH_SWITCH)
+	pinMode ( sensor_pins[0], INPUT );
+	pinMode ( sensor_pins[1], INPUT );
+	pinMode ( sensor_pins[2], INPUT );
+	pinMode ( sensor_pins[3], INPUT );
+	pinMode ( sensor_pins[4], INPUT );
+	pinMode ( sensor_pins[5], INPUT );
+	pinMode ( sensor_pins[6], INPUT );
+	pinMode ( sensor_pins[7], INPUT );
+#elif (TOUCHMODE == TOUCH_MP121)
+	cap.begin ( 0x5A );
 #endif
-  if (instrument == GHB) {
-    set_freqs(INST_SAMPLERATE / INST_NUM_CELLS_GHB);
-  } else if (instrument == BGT) {
-    set_freqs(INST_SAMPLERATE / INST_NUM_CELLS_BGT);
-  }
+#if (TOUCHMODE == TOUCH_CAP)
 
-  startMozzi(CONTROL_RATE); // set a control rate of 64 (powers of 2 please)
+	if ( readCapacitivePin ( sensor_pins[0] ) >= CAPTOUCH_TRIGGER )
+	{
+		instrument = FIRST_INSTRUMENT;
+	}
+	else if ( readCapacitivePin ( sensor_pins[1] ) >= CAPTOUCH_TRIGGER )
+	{
+		instrument = SECOND_INSTRUMENT;
+	}
+	else if ( readCapacitivePin ( sensor_pins[2] ) >= CAPTOUCH_TRIGGER )
+	{
+		instrument = THIRD_INSTRUMENT;
+	}
+	else if ( readCapacitivePin ( sensor_pins[3] ) >= CAPTOUCH_TRIGGER )
+	{
+		instrument = FOURTH_INSTRUMENT;
+	}
 
-  if (instrument == GHB) {
-    instrumentGHB.setLoopingOn();
-    instrumentGHB.setFreq(note_freqs_GHB[0]); // set the frequency
-    if (usedrones != DRONE_OFF) {
-      drone.setLoopingOn();
-      drone.setFreq((float)INST_SAMPLERATE / DRONE_NUM_CELLS); // set the frequency
-    }
-  } else if (instrument == BGT) {
-    instrumentBGT.setLoopingOn();
-    instrumentBGT.setFreq(note_freqs_BGT[0]); // set the frequency
-    if (usedrones == DRONE_STANDARD) {
-      droneminBGT.setLoopingOn();
-      droneminBGT.setFreq((float)INST_SAMPLERATE / DRONE_MIN_NUM_CELLS_BGT); // set the frequency
-      dronemajBGT.setLoopingOn();
-      dronemajBGT.setFreq((float)INST_SAMPLERATE / DRONE_MAJ_NUM_CELLS_BGT); // set the frequency
-    } else if (usedrones == DRONE_A) {
-      dronemajBGT.setLoopingOn();
-      dronemajBGT.setFreq((float)INST_SAMPLERATE / DRONE_MAJ_NUM_CELLS_BGT * 1.125f); // set the frequency to A (9/8 G)
-    } else if (usedrones == DRONE_C) {
-      dronemajBGT.setLoopingOn();
-      dronemajBGT.setFreq((float)INST_SAMPLERATE / DRONE_MAJ_NUM_CELLS_BGT * 1.35f); // set the frequency to C (9/8 * 6/5 G)
-    }
-  }
+	if ( readCapacitivePin ( sensor_pins[4] ) >= CAPTOUCH_TRIGGER )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			usedrones = DRONE_ON;
+		}
+		else
+		{
+			usedrones = DRONE_OFF;
+		}
+	}
 
+	if ( instrument == BGT && usedrones == DRONE_ON )
+	{
+		if ( readCapacitivePin ( sensor_pins[5] ) >= CAPTOUCH_TRIGGER )
+		{
+			if ( droneintonation == DRONE_INT_A )
+			{
+				droneintonation = DRONE_INT_STANDARD;
+			}
+			else
+			{
+				droneintonation = DRONE_INT_A;
+			}
+		}
+		else if ( readCapacitivePin ( sensor_pins[6] ) >= CAPTOUCH_TRIGGER )
+		{
+			if ( droneintonation == DRONE_INT_C )
+			{
+				droneintonation = DRONE_INT_STANDARD;
+			}
+			else
+			{
+				droneintonation = DRONE_INT_C;
+			}
+		}
+	}
+
+#elif (TOUCHMODE == TOUCH_MP121)
+	uint16_t currtouched = cap.touched();
+
+	if ( currtouched & _BV ( 0 ) )
+	{
+		instrument = FIRST_INSTRUMENT;
+	}
+	else if ( currtouched & _BV ( 1 ) )
+	{
+		instrument = SECOND_INSTRUMENT;
+	}
+	else if ( currtouched & _BV ( 2 ) )
+	{
+		instrument = THIRD_INSTRUMENT;
+	}
+	else if ( currtouched & _BV ( 3 ) )
+	{
+		instrument = FOURTH_INSTRUMENT;
+	}
+
+	if ( currtouched & _BV ( 4 ) )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			usedrones = DRONE_ON;
+		}
+		else
+		{
+			usedrones = DRONE_OFF;
+		}
+	}
+
+	if ( instrument == BGT && usedrones == DRONE_ON )
+	{
+		if ( currtouched & _BV ( 5 ) )
+		{
+			if ( droneintonation == DRONE_INT_A )
+			{
+				droneintonation = DRONE_INT_STANDARD;
+			}
+			else
+			{
+				droneintonation = DRONE_INT_A;
+			}
+		}
+		else if ( currtouched & _BV ( 6 ) )
+		{
+			if ( droneintonation == DRONE_INT_C )
+			{
+				droneintonation = DRONE_INT_STANDARD;
+			}
+			else
+			{
+				droneintonation = DRONE_INT_C;
+			}
+		}
+	}
+
+#else
+
+	if ( digitalRead ( sensor_pins[0] ) == LOW )
+	{
+		instrument = FIRST_INSTRUMENT;
+	}
+	else if ( digitalRead ( sensor_pins[1] ) == LOW )
+	{
+		instrument = SECOND_INSTRUMENT;
+	}
+	else if ( digitalRead ( sensor_pins[2] ) == LOW )
+	{
+		instrument = THIRD_INSTRUMENT;
+	}
+	else if ( digitalRead ( sensor_pins[3] ) == LOW )
+	{
+		instrument = FOURTH_INSTRUMENT;
+	}
+
+	if ( digitalRead ( sensor_pins[4] ) == LOW )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			usedrones = DRONE_ON;
+		}
+		else
+		{
+			usedrones = DRONE_OFF;
+		}
+	}
+
+	if ( instrument == BGT && usedrones == DRONE_ON )
+	{
+		if ( digitalRead ( sensor_pins[5] ) == LOW )
+		{
+			if ( droneintonation == DRONE_INT_A )
+			{
+				droneintonation = DRONE_INT_STANDARD;
+			}
+			else
+			{
+				droneintonation = DRONE_INT_A;
+			}
+		}
+		else if ( digitalRead ( sensor_pins[6] ) == LOW )
+		{
+			if ( droneintonation == DRONE_INT_C )
+			{
+				droneintonation = DRONE_INT_STANDARD;
+			}
+			else
+			{
+				droneintonation = DRONE_INT_C;
+			}
+		}
+	}
+
+#endif
+	// init frequency tables for all instruments
+	set_freqs ( );
+	startMozzi ( CONTROL_RATE ); // set a control rate of 64 (powers of 2 please)
+
+	if ( instrument == GHB )
+	{
+		instrumentGHB.setLoopingOn();
+		instrumentGHB.setFreq ( note_freqs_GHB[0] ); // set the frequency
+
+		if ( usedrones != DRONE_OFF )
+		{
+			droneGHB.setLoopingOn();
+			droneGHB.setFreq ( ( float ) INST_SAMPLERATE_GHB / DRONE_NUM_CELLS_GHB ); // set the frequency
+		}
+	}
+	else if ( instrument == BGT )
+	{
+		instrumentBGT.setLoopingOn();
+		instrumentBGT.setFreq ( note_freqs_BGT[0] ); // set the frequency
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( droneintonation == DRONE_INT_STANDARD )
+			{
+				droneminBGT.setLoopingOn();
+				droneminBGT.setFreq ( ( float ) INST_SAMPLERATE_BGT / DRONE_MIN_NUM_CELLS_BGT ); // set the frequency
+				dronemajBGT.setLoopingOn();
+				dronemajBGT.setFreq ( ( float ) INST_SAMPLERATE_BGT / DRONE_MAJ_NUM_CELLS_BGT ); // set the frequency
+			}
+			else if ( usedrones == DRONE_INT_A )
+			{
+				dronemajBGT.setLoopingOn();
+				dronemajBGT.setFreq ( ( float ) INST_SAMPLERATE_BGT / DRONE_MAJ_NUM_CELLS_BGT * 1.125f ); // set the frequency to A (9/8 G)
+			}
+			else if ( usedrones == DRONE_INT_C )
+			{
+				dronemajBGT.setLoopingOn();
+				dronemajBGT.setFreq ( ( float ) INST_SAMPLERATE_BGT / DRONE_MAJ_NUM_CELLS_BGT * 1.35f ); // set the frequency to C (9/8 * 6/5 G)
+			}
+		}
+	}
+	else if ( instrument == BRD )
+	{
+		instrumentBRD.setLoopingOn();
+		instrumentBRD.setFreq ( note_freqs_BRD[0] ); // set the frequency
+
+		if ( usedrones != DRONE_OFF )
+		{
+			droneBRD.setLoopingOn();
+			droneBRD.setFreq ( ( float ) INST_SAMPLERATE_BRD / DRONE_NUM_CELLS_BRD ); // set the frequency
+		}
+	}
+	else if ( instrument == SML )
+	{
+		instrumentSML.setLoopingOn();
+		instrumentSML.setFreq ( note_freqs_SML[0] ); // set the frequency
+
+		if ( usedrones != DRONE_OFF )
+		{
+			droneSML.setLoopingOn();
+			droneSML.setFreq ( ( float ) INST_SAMPLERATE_SML / DRONE_NUM_CELLS_SML ); // set the frequency
+		}
+	}
+	else if ( instrument == UIL )
+	{
+		instrumentUIL.setLoopingOn();
+		instrumentUIL.setFreq ( note_freqs_UIL[0] ); // set the frequency
+
+		if ( usedrones != DRONE_OFF )
+		{
+			droneUIL.setLoopingOn();
+			droneUIL.setFreq ( ( float ) INST_SAMPLERATE_UIL / DRONE_NUM_CELLS_UIL ); // set the frequency
+		}
+	}
 }
 
-void set_freqs(float f) {
+void set_freqs ( )
+{
+	// setup freq. tables
+	float f = INST_SAMPLERATE_BGT / INST_NUM_CELLS_BGT;
 
-  if (instrument == BGT) {
-    // setup freq. table
-    for (i = 0; i < table_len_BGT; i++) {
-      note_freqs_BGT[i] = (f * note_ratios_BGT[i][0]) / note_ratios_BGT[i][1];
-    }
-  } else if (instrument == GHB) {
-    // setup freq. table
-    for (i = 0; i < table_len_GHB; i++) {
-      note_freqs_GHB[i] = (f * note_ratios_GHB[i][0]) / note_ratios_GHB[i][1];
-    }
-  }
+	for ( i = 0; i < table_len_BGT; i++ )
+	{
+		note_freqs_BGT[i] = ( f * note_ratios_BGT[i][0] ) / note_ratios_BGT[i][1];
+	}
 
+	f = INST_SAMPLERATE_GHB / INST_NUM_CELLS_GHB;
 
+	for ( i = 0; i < table_len_GHB; i++ )
+	{
+		note_freqs_GHB[i] = ( f * note_ratios_GHB[i][0] ) / note_ratios_GHB[i][1];
+	}
+
+	f = INST_SAMPLERATE_BRD / INST_NUM_CELLS_BRD;
+
+	for ( i = 0; i < table_len_BRD; i++ )
+	{
+		note_freqs_BRD[i] = ( f * note_ratios_BRD[i][0] ) / note_ratios_BRD[i][1];
+	}
+
+	f = INST_SAMPLERATE_SML / INST_NUM_CELLS_SML;
+
+	for ( i = 0; i < table_len_SML; i++ )
+	{
+		note_freqs_SML[i] = ( f * note_ratios_SML[i][0] ) / note_ratios_SML[i][1];
+	}
+
+	f = INST_SAMPLERATE_UIL / INST_NUM_CELLS_UIL;
+
+	for ( i = 0; i < table_len_UIL; i++ )
+	{
+		note_freqs_UIL[i] = ( f * note_ratios_UIL[i][0] ) / note_ratios_UIL[i][1];
+	}
 }
 
 
-void updateControl() {
+void updateControl()
+{
+	byte fb = 0;
+	int sensor_val = 0;
+	// put changing controls in here
+	/* Read the relevant pin registers and construct a single byte 'map'   */
+	/* of the pin states. Touched pins will be HIGH, untouched pins LOW    */
+#if (TOUCHMODE == TOUCH_CAP)
 
-  byte fb = 0;
+	// set map
+	if ( readCapacitivePin ( sensor_pins[curr_sensor] ) >= CAPTOUCH_TRIGGER )
+	{
+		// make bit to be 1
+		fmap |= ( 1 << ( 7 - curr_sensor ) );
+	}
 
-  int sensor_val = 0;
-  // put changing controls in here
+	curr_sensor++;
 
-  /* Read the relevant pin registers and construct a single byte 'map'   */
-  /* of the pin states. Touched pins will be HIGH, untouched pins LOW    */
+	//increment, return until all sensors are sampled, then toggle bitmap, reset counter and continue
+	if ( curr_sensor % num_sensors == 0 )
+	{
+		//fmap = ~fmap; // toggle bitmap because bushbutton code is LOW when touched.
+		curr_sensor = 0; // rset counter
+	}
+	else
+	{
+		return;
+	}
 
+#elif (TOUCHMODE == TOUCH_MP121)
+	fmap = cap.touched();
+	fmap &= B11111111;
+#else
+	// pushbuttonetc, finger sensors
+	fmap = PIND >> 2;  // get rid of lowest 2 bytes,  fill top 2 bytes
+	fb = PINB; // D8, D11 (bits 0, 3)
 
-#if CAPTOUCH
-  // set map
-  if (readCapacitivePin(sensor_pins[curr_sensor]) >= CAPTOUCH_TRIGGER) {
-    // make bit to be 1
-    fmap |= (1 << (7 - curr_sensor));
-  }
-  curr_sensor++;
+	if ( fb & B00000001 ) // true only if bit ZERO is 1
+	{
+		// make  bit 6 in fmap to be 1
+		fmap |= ( 1 << 6 );
+	}
+	else
+	{
+		// untouched make bit 6 to be 0
+		fmap &= ~ ( 1 << 6 );
+	}
 
-  //increment, return until all sensors are sampled, then toggle bitmap, reset counter and continue
-  if (curr_sensor % num_sensors == 0) {
-    //fmap = ~fmap; // toggle bitmap because bushbutton code is LOW when touched.
-    curr_sensor = 0; // rset counter
-  } else {
-    return;
-  }
-
-
-#else // pushbuttonetc, finger sensors
-
-  fmap = PIND >> 2;  // get rid of lowest 2 bytes,  fill top 2 bytes
-
-
-  fb = PINB; // D8, D11 (bits 0, 3)
-
-  if (fb & B00000001) { // true only if bit ZERO is 1
-    // make  bit 6 in fmap to be 1
-    fmap |= (1 << 6);
-  } else {
-    // untouched make bit 6 to be 0
-    fmap &= ~(1 << 6);
-  }
-
-  if (fb & B00010000) { // true only if bit 3 is 1
-    // make  bit 7 in fmap to be 1
-    fmap |= (1 << 7);
-  } else {
-    // untouched make bit 7 to be 0
-    fmap &= ~(1 << 7);
-  }
+	if ( fb & B00010000 ) // true only if bit 3 is 1
+	{
+		// make  bit 7 in fmap to be 1
+		fmap |= ( 1 << 7 );
+	}
+	else
+	{
+		// untouched make bit 7 to be 0
+		fmap &= ~ ( 1 << 7 );
+	}
 
 #endif
+	note_detected = -1;
 
-  note_detected = -1;
+	if ( instrument == BGT )
+	{
+		for ( i = 0; i < table_len_BGT; i++ )
+		{
+			if ( ( fmap ^ finger_table_BGT[i] ) == 0 )
+			{
+				note_detected = i;
+			}
+		}
 
-  if (instrument == BGT) {
-    for (i = 0; i < table_len_BGT; i++) {
-      if ((fmap ^ finger_table_BGT[i]) == 0) {
-        note_detected = i;
-      }
-    }
-    // gracenotes
-    if (note_detected == -1) {
-      if (((fmap >> 7) & 1 ) == 0) {
-        note_detected = 0;
-      }
-      else if (((fmap >> 6) & 1 ) == 0) {
-        if (((fmap >> 5) & 1 ) == 0) {
-          note_detected = 1;
-        } else {
-          note_detected = 2;
-        }
-      }
-      else if (((fmap >> 5) & 1 ) == 0) {
-        if (((fmap >> 4) & 1 ) == 0) {
-          note_detected = 3;
-        } else {
-          note_detected = 4;
-        }
-      }
-      else if (((fmap >> 4) & 1 ) == 0) {
-        if (((fmap >> 3) & 1 ) == 0) {
-          note_detected = 5;
-        } else {
-          note_detected = 6;
-        }
-      }
-      else if (((fmap >> 3) & 1 ) == 0) {
-        note_detected = 7;
-      }
-      else if (((fmap >> 2) & 1 ) == 0) {
-        if (((fmap >> 1) & 1 ) == 0) {
-          note_detected = 8;
-        } else {
-          note_detected = 9;
-        }
-      }
-      else if (((fmap >> 1) & 1 ) == 0) {
-        if (((fmap >> 0) & 1 ) == 0) {
-          note_detected = 10;
-        } else {
-          note_detected = 11;
-        }
-      }
-      else if (((fmap >> 0) & 1 ) == 0) {
-        note_detected = 12;
-      }
-      else {
-        note_detected = 13;
-      }
-    }
-  } else if (instrument == GHB) {
-    for (i = 0; i < table_len_GHB; i++) {
-      if ((fmap ^ finger_table_GHB[i]) == 0) {
-        note_detected = i;
-      }
-    }
-    // gracenotes
-    if (note_detected == -1) {
-      if (((fmap >> 7) & 1 ) == 0) {
-        note_detected = 0;
-      }
-      else if (((fmap >> 6) & 1 ) == 0) {
-        note_detected = 1;
-      }
-      else if (((fmap >> 5) & 1 ) == 0) {
-        note_detected = 2;
-      }
-      else if (((fmap >> 4) & 1 ) == 0) {
-        note_detected = 3;
-      }
-      else if (((fmap >> 3) & 1 ) == 0) {
-        note_detected = 4;
-      }
-      else if (((fmap >> 2) & 1 ) == 0) {
-        note_detected = 5;
-      }
-      else if (((fmap >> 1) & 1 ) == 0) {
-        note_detected = 6;
-      }
-      else if (((fmap >> 0) & 1 ) == 0) {
-        note_detected = 7;
-      }
-      else {
-        /* LG or no note? */ note_detected = 8;
-      }
-    }
-  }
+		// gracenotes
+		if ( note_detected == -1 )
+		{
+			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
+			{
+				note_detected = 0;
+			}
+			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
+			{
+				if ( ( ( fmap >> 5 ) & 1 ) == 0 )
+				{
+					note_detected = 1;
+				}
+				else
+				{
+					note_detected = 2;
+				}
+			}
+			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
+			{
+				if ( ( ( fmap >> 4 ) & 1 ) == 0 )
+				{
+					note_detected = 3;
+				}
+				else
+				{
+					note_detected = 4;
+				}
+			}
+			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
+			{
+				if ( ( ( fmap >> 3 ) & 1 ) == 0 )
+				{
+					note_detected = 5;
+				}
+				else
+				{
+					note_detected = 6;
+				}
+			}
+			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
+			{
+				note_detected = 7;
+			}
+			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
+			{
+				if ( ( ( fmap >> 1 ) & 1 ) == 0 )
+				{
+					note_detected = 8;
+				}
+				else
+				{
+					note_detected = 9;
+				}
+			}
+			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
+			{
+				if ( ( ( fmap >> 0 ) & 1 ) == 0 )
+				{
+					note_detected = 10;
+				}
+				else
+				{
+					note_detected = 11;
+				}
+			}
+			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
+			{
+				note_detected = 12;
+			}
+			else
+			{
+				note_detected = 13;
+			}
+		}
+	}
+	else if ( instrument == GHB )
+	{
+		for ( i = 0; i < table_len_GHB; i++ )
+		{
+			if ( ( fmap ^ finger_table_GHB[i] ) == 0 )
+			{
+				note_detected = i;
+			}
+		}
 
+		// gracenotes
+		if ( note_detected == -1 )
+		{
+			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
+			{
+				note_detected = 0;
+			}
+			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
+			{
+				note_detected = 1;
+			}
+			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
+			{
+				note_detected = 2;
+			}
+			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
+			{
+				note_detected = 3;
+			}
+			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
+			{
+				note_detected = 4;
+			}
+			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
+			{
+				note_detected = 5;
+			}
+			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
+			{
+				note_detected = 6;
+			}
+			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
+			{
+				note_detected = 7;
+			}
+			else
+			{
+				/* LG or no note? */ note_detected = 8;
+			}
+		}
+	}
+	else if ( instrument == BRD )
+	{
+		for ( i = 0; i < table_len_BRD; i++ )
+		{
+			if ( ( fmap ^ finger_table_BRD[i] ) == 0 )
+			{
+				note_detected = i;
+			}
+		}
 
+		// gracenotes
+		if ( note_detected == -1 )
+		{
+			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
+			{
+				note_detected = 0;
+			}
+			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
+			{
+				note_detected = 1;
+			}
+			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
+			{
+				note_detected = 2;
+			}
+			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
+			{
+				note_detected = 3;
+			}
+			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
+			{
+				note_detected = 4;
+			}
+			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
+			{
+				note_detected = 5;
+			}
+			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
+			{
+				note_detected = 6;
+			}
+			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
+			{
+				note_detected = 7;
+			}
+			else
+			{
+				/* LG or no note? */ note_detected = 8;
+			}
+		}
+	}
+	else if ( instrument == SML )
+	{
+		for ( i = 0; i < table_len_SML; i++ )
+		{
+			if ( ( fmap ^ finger_table_SML[i] ) == 0 )
+			{
+				note_detected = i;
+			}
+		}
 
-  if (note_detected != note_playing) {
-    note_playing = note_detected;
-    if (instrument == GHB) {
-      instrumentGHB.setFreq(note_freqs_GHB[note_playing]);
-    } else if (instrument == BGT) {
-      instrumentBGT.setFreq(note_freqs_BGT[note_playing]);
-    }
+		// gracenotes
+		if ( note_detected == -1 )
+		{
+			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
+			{
+				note_detected = 0;
+			}
+			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
+			{
+				note_detected = 1;
+			}
+			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
+			{
+				note_detected = 2;
+			}
+			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
+			{
+				note_detected = 3;
+			}
+			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
+			{
+				note_detected = 4;
+			}
+			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
+			{
+				note_detected = 5;
+			}
+			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
+			{
+				note_detected = 6;
+			}
+			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
+			{
+				note_detected = 7;
+			}
+			else
+			{
+				/* LG or no note? */ note_detected = 8;
+			}
+		}
+	}
+	else if ( instrument == UIL )
+	{
+		for ( i = 0; i < table_len_UIL; i++ )
+		{
+			if ( ( fmap ^ finger_table_UIL[i] ) == 0 )
+			{
+				note_detected = i;
+			}
+		}
 
-  }
+		// gracenotes
+		if ( note_detected == -1 )
+		{
+			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
+			{
+				note_detected = 0;
+			}
+			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
+			{
+				note_detected = 1;
+			}
+			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
+			{
+				note_detected = 2;
+			}
+			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
+			{
+				note_detected = 3;
+			}
+			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
+			{
+				note_detected = 4;
+			}
+			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
+			{
+				note_detected = 5;
+			}
+			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
+			{
+				note_detected = 6;
+			}
+			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
+			{
+				note_detected = 7;
+			}
+			else
+			{
+				/* LG or no note? */ note_detected = 8;
+			}
+		}
+	}
 
-  // reset fingermap
-  fmap = 0;
+	if ( note_detected != note_playing )
+	{
+		note_playing = note_detected;
 
+		if ( instrument == GHB )
+		{
+			instrumentGHB.setFreq ( note_freqs_GHB[note_playing] );
+		}
+		else if ( instrument == BGT )
+		{
+			instrumentBGT.setFreq ( note_freqs_BGT[note_playing] );
+		}
+		else if ( instrument == BRD )
+		{
+			instrumentBRD.setFreq ( note_freqs_BRD[note_playing] );
+		}
+		else if ( instrument == SML )
+		{
+			instrumentSML.setFreq ( note_freqs_SML[note_playing] );
+		}
+		else if ( instrument == UIL )
+		{
+			instrumentUIL.setFreq ( note_freqs_UIL[note_playing] );
+		}
+	}
+
+	// reset fingermap
+	fmap = 0;
 }
 
+#if (STEREO_HACK == true)
+// needed for stereo output
+int audio_out_1, audio_out_2;
 
-int updateAudio() {
+void updateAudio()
+{
+#if IS_STM32()
 
+	if ( instrument == GHB )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneGHB.next() * GHB_DRONES_VOLUME ) >> 9 );
+		}
+		else
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = 0;
+		}
+	}
+	else if ( instrument == BGT )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = 0;
+		}
+		else if ( droneintonation == DRONE_INT_STANDARD )
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 10 );
+		}
+		else
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = ( int16_t ) ( (  ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 9 );
+		}
+	}
+	else if ( instrument == BRD )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneBRD.next() * BRD_DRONES_VOLUME ) >> 9 );
+		}
+		else
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = 0;
+		}
+	}
+	else if ( instrument == SML )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneSML.next() * SML_DRONES_VOLUME ) >> 9 );
+		}
+		else
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = 0;
+		}
+	}
+	else if ( instrument == UIL )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneUIL.next() * UIL_DRONES_VOLUME ) >> 9 );
+		}
+		else
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = 0;
+		}
+	}
+
+#else
+
+	if ( instrument == GHB )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			audio_out_1 = ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = ( ( int16_t ) droneGHB.next() * GHB_DRONES_VOLUME ) >> 3;
+		}
+		else
+		{
+			audio_out_1 = ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = 0;
+		}
+	}
+	else if ( instrument == BGT )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			audio_out_1 = ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = 0;
+		}
+		else if ( droneintonation == DRONE_INT_STANDARD )
+		{
+			audio_out_1 = ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = ( ( int16_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 4;
+		}
+		else
+		{
+			audio_out_1 = ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = ( ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 3;
+		}
+	}
+	else if ( instrument == BRD )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			audio_out_1 = ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = ( ( int16_t ) droneBRD.next() * BRD_DRONES_VOLUME ) >> 3;
+		}
+		else
+		{
+			audio_out_1 = ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = 0;
+		}
+	}
+	else if ( instrument == SML )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			audio_out_1 = ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = ( ( int16_t ) droneSML.next() * SML_DRONES_VOLUME ) >> 3;
+		}
+		else
+		{
+			audio_out_1 = ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = 0;
+		}
+	}
+	else if ( instrument == UIL )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			audio_out_1 = ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = ( ( int16_t ) droneUIL.next() * UIL_DRONES_VOLUME ) >> 3;
+		}
+		else
+		{
+			audio_out_1 = ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = 0;
+		}
+	}
+
+#endif
+}
+
+#else
+int updateAudio()
+{
+	//for Arduino STANDARD and STANDARD PLUS the sample is nearly 9 bits (between -244 and 243)
+	//for STM32 STANDARD and STANDARD PLUS the sample is 11 bits (between -1024 and 1023)
+	//for HIFI, both Arduino and STM32 is 15 bits (between -16384 and 16383)
 #if (AUDIO_MODE == HIFI)
-  if (instrument == GHB) {
-    if (usedrones != DRONE_OFF) {
-      return ((int16_t)instrumentGHB.next() + (int16_t)drone.next()) << 6;
-    } else {
-      return ((int16_t)instrumentGHB.next()) << 6;
-    }
-  } else if (instrument == BGT) {
-    if (usedrones == DRONE_OFF) {
-      return ( (int16_t)instrumentBGT.next()) << 6;
-    } else if (usedrones == DRONE_STANDARD) {
-      return ( (int16_t)instrumentBGT.next() + (int16_t)droneminBGT.next() + (int16_t)dronemajBGT.next()) << 4;
-    } else {
-      return ( (int16_t)instrumentBGT.next() + (int16_t)dronemajBGT.next()) << 5;
-    }
-  }
+#if IS_STM32()
+
+	if ( instrument == GHB )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME + ( int32_t ) droneGHB.next() * GHB_DRONES_VOLUME ) >> 6 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 5 );
+		}
+	}
+	else if ( instrument == BGT )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 5 );
+		}
+		else if ( droneintonation == DRONE_INT_STANDARD )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 7 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 6 );
+		}
+	}
+	else if ( instrument == BRD )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME + ( int32_t ) droneBRD.next() * BRD_DRONES_VOLUME ) >> 6 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 5 );
+		}
+	}
+	else if ( instrument == SML )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME + ( int32_t ) droneSML.next() * SML_DRONES_VOLUME ) >> 6 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 5 );
+		}
+	}
+	else if ( instrument == UIL )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME + ( int32_t ) droneUIL.next() * UIL_DRONES_VOLUME ) >> 6 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 5 );
+		}
+	}
+
 #else
-  if (instrument == GHB) {
-    if (usedrones != DRONE_OFF) {
-      return ((int16_t)instrumentGHB.next() + (int16_t)drone.next())
-    } else {
-      return ((int16_t)instrumentGHB.next());
-    }
-  } else if (instrument == BGT) {
-    if (usedrones == DRONE_OFF) {
-      return ( (int16_t)instrumentBGT.next());
-    } else if (usedrones == DRONE_STANDARD) {
-      return ( (int16_t)instrumentBGT.next() + (int16_t)droneminBGT.next() + (int16_t)dronemajBGT.next());
-    } else {
-      return ( (int16_t)instrumentBGT.next() + (int16_t)dronemajBGT.next());
-    }
-  }
+
+	if ( instrument == GHB )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME + ( int16_t ) droneGHB.next() * GHB_DRONES_VOLUME ) << 2;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) << 3;
+		}
+	}
+	else if ( instrument == BGT )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) << 3;
+		}
+		else if ( droneintonation == DRONE_INT_STANDARD )
+		{
+			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) << 1;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) << 2;
+		}
+	}
+	else if ( instrument == BRD )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME + ( int16_t ) droneBRD.next() * BRD_DRONES_VOLUME ) << 2;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) << 3;
+		}
+	}
+	else if ( instrument == SML )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME + ( int16_t ) droneSML.next() * SML_DRONES_VOLUME ) << 2;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) << 3;
+		}
+	}
+	else if ( instrument == UIL )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME + ( int16_t ) droneUIL.next() * UIL_DRONES_VOLUME ) << 2;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) << 3;
+		}
+	}
+
+#endif
+#else
+#if IS_STM32()
+
+	if ( instrument == GHB )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME + ( int32_t ) droneGHB.next() * GHB_DRONES_VOLUME ) >> 10 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 9 );
+		}
+	}
+	else if ( instrument == BGT )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 9 );
+		}
+		else if ( droneintonation == DRONE_INT_STANDARD )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 11 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 10 );
+		}
+	}
+	else if ( instrument == BRD )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME + ( int32_t ) droneBRD.next() * BRD_DRONES_VOLUME ) >> 10 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 9 );
+		}
+	}
+	else if ( instrument == SML )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME + ( int32_t ) droneSML.next() * SML_DRONES_VOLUME ) >> 10 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 9 );
+		}
+	}
+	else if ( instrument == UIL )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME + ( int32_t ) droneUIL.next() * UIL_DRONES_VOLUME ) >> 10 );
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 9 );
+		}
+	}
+
+#else
+
+	if ( instrument == GHB )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME + ( int16_t ) droneGHB.next() * GHB_DRONES_VOLUME ) >> 4;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 3;
+		}
+	}
+	else if ( instrument == BGT )
+	{
+		if ( usedrones == DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 3;
+		}
+		else if ( droneintonation == DRONE_INT_STANDARD )
+		{
+			return  ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 5;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 4;
+		}
+	}
+	else if ( instrument == BRD )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME + ( int16_t ) droneBRD.next() * BRD_DRONES_VOLUME ) >> 4;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 3;
+		}
+	}
+	else if ( instrument == SML )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME + ( int16_t ) droneSML.next() * SML_DRONES_VOLUME ) >> 4;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 3;
+		}
+	}
+	else if ( instrument == UIL )
+	{
+		if ( usedrones != DRONE_OFF )
+		{
+			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME + ( int16_t ) droneUIL.next() * UIL_DRONES_VOLUME ) >> 4;
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 3;
+		}
+	}
+
+#endif
+#endif
+}
 #endif
 
-
+void loop()
+{
+	audioHook(); // required here
 }
 
-
-void loop() {
-  audioHook(); // required here
-
-
-}
-
-#if CAPTOUCH
+#if (TOUCHMODE == TOUCH_CAP)
 
 // captouch code from eChanter, unrolled to be faster and more reliable, courtesy of
 //  Danial Martinez, GPL v2
 //  https://github.com/danielmartinez/eClarin
 //
-uint8_t readCapacitivePin(int pinToMeasure) {
-  // Variables used to translate from Arduino to AVR pin naming
-  volatile uint8_t* port;
-  volatile uint8_t* ddr;
-  volatile uint8_t* pin;
-  // Here we translate the input pin number from
-  //  Arduino pin number to the AVR PORT, PIN, DDR,
-  //  and which bit of those registers we care about.
-  byte bitmask;
-  port = portOutputRegister(digitalPinToPort(pinToMeasure));
-  ddr = portModeRegister(digitalPinToPort(pinToMeasure));
-  bitmask = digitalPinToBitMask(pinToMeasure);
-  pin = portInputRegister(digitalPinToPort(pinToMeasure));
-  // Discharge the pin first by setting it low and output
-  *port &= ~(bitmask);
-  *ddr  |= bitmask;
-  // delay(1);
-  // Make the pin an input with the internal pull-up on
-  *ddr &= ~(bitmask);
-  *port |= bitmask;
+uint8_t readCapacitivePin ( int pinToMeasure )
+{
+	// Variables used to translate from Arduino to AVR pin naming
+#if IS_STM32()
+	volatile uint32_t *port;
+	volatile uint32_t *pin;
+#else
+	volatile uint8_t *port;
+	volatile uint8_t *ddr;
+	volatile uint8_t *pin;
+#endif
+	// Here we translate the input pin number from
+	//  Arduino pin number to the AVR PORT, PIN, DDR,
+	//  and which bit of those registers we care about.
+	byte bitmask;
+	port = portOutputRegister ( digitalPinToPort ( pinToMeasure ) );
+#if not IS_STM32()
+	ddr = portModeRegister ( digitalPinToPort ( pinToMeasure ) );
+#endif
+	bitmask = digitalPinToBitMask ( pinToMeasure );
+	pin = portInputRegister ( digitalPinToPort ( pinToMeasure ) );
+	// Discharge the pin first by setting it low and output
+	*port &= ~ ( bitmask );
+#if IS_STM32()
+	pinMode ( pinToMeasure, OUTPUT );
+#else
+	*ddr  |= bitmask;
+#endif
+	// delay(1);
+	// Make the pin an input with the internal pull-up on
+#if IS_STM32()
+	pinMode ( pinToMeasure, INPUT_PULLUP );
+#else
+	*ddr &= ~ ( bitmask );
+#endif
+	*port |= bitmask;
+	// Now see how long the pin to get pulled up. This manual unrolling of the loop
+	// decreases the number of hardware cycles between each read of the pin,
+	// thus increasing sensitivity.
+	uint8_t cycles = 17;
 
-  // Now see how long the pin to get pulled up. This manual unrolling of the loop
-  // decreases the number of hardware cycles between each read of the pin,
-  // thus increasing sensitivity.
-  uint8_t cycles = 17;
-  if (*pin & bitmask) {
-    cycles =  0;
-  }
-  else if (*pin & bitmask) {
-    cycles =  1;
+	if ( *pin & bitmask )
+	{
+		cycles =  0;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  1;
 #if (CAPTOUCH_TRIGGER == 1)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles =  2;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  2;
 #if (CAPTOUCH_TRIGGER == 2)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles =  3;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  3;
 #if (CAPTOUCH_TRIGGER == 3)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles =  4;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  4;
 #if (CAPTOUCH_TRIGGER == 4)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles =  5;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  5;
 #if (CAPTOUCH_TRIGGER == 5)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles =  6;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  6;
 #if (CAPTOUCH_TRIGGER == 6)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles =  7;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  7;
 #if (CAPTOUCH_TRIGGER == 7)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles =  8;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  8;
 #if (CAPTOUCH_TRIGGER == 8)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles =  9;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles =  9;
 #if (CAPTOUCH_TRIGGER == 9)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles = 10;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles = 10;
 #if (CAPTOUCH_TRIGGER == 10)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles = 11;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles = 11;
 #if (CAPTOUCH_TRIGGER == 11)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles = 12;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles = 12;
 #if (CAPTOUCH_TRIGGER == 12)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles = 13;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles = 13;
 #if (CAPTOUCH_TRIGGER == 13)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles = 14;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles = 14;
 #if (CAPTOUCH_TRIGGER == 14)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles = 15;
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles = 15;
 #if (CAPTOUCH_TRIGGER == 15)
-	goto exit;
+		goto exit;
 #endif
-  }
-  else if (*pin & bitmask) {
-    cycles = 16;
-  }
+	}
+	else if ( *pin & bitmask )
+	{
+		cycles = 16;
+	}
 
 exit:
-  // Discharge the pin again by setting it low and output
-  //  It's important to leave the pins low if you want to
-  //  be able to touch more than 1 sensor at a time - if
-  //  the sensor is left pulled high, when you touch
-  //  two sensors, your body will transfer the charge between
-  //  sensors.
-  *port &= ~(bitmask);
-  *ddr  |= bitmask;
-
-  return cycles;
+	// Discharge the pin again by setting it low and output
+	//  It's important to leave the pins low if you want to
+	//  be able to touch more than 1 sensor at a time - if
+	//  the sensor is left pulled high, when you touch
+	//  two sensors, your body will transfer the charge between
+	//  sensors.
+	*port &= ~ ( bitmask );
+#if IS_STM32()
+	pinMode ( pinToMeasure, OUTPUT );
+#else
+	*ddr  |= bitmask;
+#endif
+	return cycles;
 }
 
 #endif

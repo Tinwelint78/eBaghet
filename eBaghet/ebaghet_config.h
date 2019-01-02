@@ -1,24 +1,26 @@
 /* eBaghet configuration file */
-/* CAPTOUCH       true/false
- *    true if using apacitive touch style sensors
- *    false if using touchpad or push button style switches
+/* TOUCHMODE
+ *   what mode to the finger sensors. Can be one of:
+ *		TOUCH_SWITCH	standard pushbuttons
+ *		TOUCH_CAP		capacitive sensors
+ *		TOUCH_MP121		Adafruit MP121 board
  *
  * CAPTOUCH_TRIGGER  0-16
- *    Values in the range 6-8 tend to work well
+ *	Values in the range 6-8 tend to work well
+ *
+ * STARTING_INSTRUMENT/FIRST_INSTRUMENT/SECOND_INSTRUMENT/THIRD_INSTRUMENT/FOURTH_INSTRUMENT
+ *	Selectable starting instrument and other instruments that can be chosen closing some keys
+ *	Can be any of BGT (baghet), GHB (Great Highland Bagpipe), BRD (border pipe), SML (small pipe) or UIL (uillean pipe).
+ *	Uillean pipe for now has great highland bagpipe fingering
  *
  * sensor_pins
  *    Digital inputs for sensors or buttons,
  *    in order from HA to LA.
  *
- * finger_table
- *    Finger mapings for various notes.
+ * CHANTER_VOLUME/DRONE_VOLUME	1-8
+ *	for each instrument the relative volume of chanter and drones can be selected
  *
- * drone_freqs
- *    Calculated at setup from base frequency for tenor
- *    and bass drones.
- *
- *
- * ==== DATA RESATIONSHIPS ====
+ * ==== DATA RELATIONSHIPS ====
  * For sensor pins, eBaghet recognizes 8 pins which are polled
  * and used to set an 8bit 'touch map,' so it is important that
  * the HA to LA order is preserved.
@@ -41,78 +43,57 @@
 
 #ifndef EBAGHET_CONFIG_H_
 #define EBAGHET_CONFIG_H_
-#define GHB 100
-#define BGT 200
 
-#define CAPTOUCH true
+
+#define GHB 100				// Great Highland Bagpipe
+#define BGT 200				// Baghet
+#define BRD 300				// Border Pipe
+#define SML 400				// Small Pipe
+#define UIL 500				// Uillean Pipe
+#define STARTING_INSTRUMENT	GHB
+#define FIRST_INSTRUMENT	BGT
+#define SECOND_INSTRUMENT	BRD
+#define THIRD_INSTRUMENT	SML
+#define FOURTH_INSTRUMENT	UIL
+
+#define DRONE_OFF		0
+#define DRONE_ON		1
+#define STARTING_DRONES	DRONE_ON
+
+#define DRONE_INT_STANDARD	0
+#define DRONE_INT_A			1
+#define DRONE_INT_C			2
+#define STARTING_DRONE_INT	DRONE_INT_STANDARD
+
+#define TOUCH_SWITCH	0
+#define TOUCH_CAP		1
+#define TOUCH_MP121		2
+// NOTE: for MP121 to work with Arduino, twi_nonblock.h and twi_nonblock.cpp must be deleted from Mozzi library!
+#define TOUCHMODE TOUCH_CAP
 #define CAPTOUCH_TRIGGER 4
 
+// relative volumes 1-8
+#define GHB_CHANTER_VOLUME	8
+#define GHB_DRONES_VOLUME	4
+
+#define BGT_CHANTER_VOLUME	8
+#define BGT_DRONES_VOLUME	4
+
+#define BRD_CHANTER_VOLUME	8
+#define BRD_DRONES_VOLUME	8
+
+#define SML_CHANTER_VOLUME	8
+#define SML_DRONES_VOLUME	8
+
+#define UIL_CHANTER_VOLUME	8
+#define UIL_DRONES_VOLUME	8
+
 int num_sensors = 8;
-int sensor_pins[] = {12,8,7,6,5,4,3,2};
+#if IS_STM32()
+int sensor_pins[] = {PA7, PA6, PA5, PA4, PA3, PA2, PA1, PA0};
+#else
+int sensor_pins[] = { 12, 8, 7, 6, 5, 4, 3, 2 };
+#endif
 
-#define table_len_GHB 9
-byte finger_table_GHB [table_len_GHB] = {
-  B00011110, /*HA */
-  B10001110, /*HG */
-  B11001110, /* F */
-  B11101110, /* E */
-  B11110001, /* D */
-  B11111001, /* C */
-  B11111100, /* B */
-  B11111110, /*LA */
-  B11111111  /*LG */
-};
-
-int note_ratios_GHB [table_len_GHB][2]= {
-  {2,1},  /*HA */
-  {16,9}, /*HG */
-  {5,3},  /* F */
-  {3,2},  /* E */
-  {4,3},  /* D */
-  {5,4},  /* C */
-  {9,8},  /* B */
-  {1,1},  /*LA */
-  {8,9}   /*LG */
-};
-
-float note_freqs_GHB [table_len_GHB]= {1,1,1,1,1,1,1,1,1};
-
-#define table_len_BGT 14
-byte finger_table_BGT [table_len_BGT] = {
-  B00000000, /* G */
-  B10000000, /* F# */
-  B10100000, /* F */
-  B11000000, /* E */
-  B11010000, /* Eb */
-  B11100000, /* D */
-  B11101000, /* C# */
-  B11110000, /* C */
-  B11111000, /* B */
-  B11111010, /* Bb */
-  B11111100, /* A */
-  B11111101, /* Ab */
-  B11111110, /* G */
-  B11111111  /* F# */
-};
-
-int note_ratios_BGT [table_len_BGT][2]= {
-            /*Note  Just    EqT     Sampled */
-  {16,9},   /* G    789 Hz  791 Hz  (789 Hz)*/
-  {5,3},    /* F#   740 Hz  747 Hz  (742 Hz)*/
-  {8,5},    /* F    710 Hz  705 Hz          */
-  {3,2},    /* E    666 Hz  665 Hz  (658 Hz)*/
-  {7,5},    /* Eb   622 Hz  628 Hz          */
-  {4,3},    /* D    592 Hz  593 Hz  (586 Hz)*/
-  {5,4},    /* C#   555 Hz  559 Hz          */
-  {6,5},    /* C    533 Hz  528 Hz  (527 Hz)*/
-  {9,8},    /* B    499 Hz  498 Hz  (492 Hz)*/
-  {16,15},  /* Bb   474 Hz  470 Hz          */
-  {1,1},    /* A    444 Hz  444 Hz  (444 Hz)*/
-  {15,16},  /* Ab   416 Hz  419 Hz          */
-  {8,9},    /* G    395 Hz  396 Hz  (398 Hz)*/
-  {5,6}     /* F#   370 Hz  373 Hz  (363 Hz)*/
-};
-
-float note_freqs_BGT [table_len_BGT]= {1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
 #endif /* EBAGHET_CONFIG_H_ */
