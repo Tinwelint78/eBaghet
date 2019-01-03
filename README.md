@@ -117,11 +117,11 @@ They are ordered from high A (12 and PA7) to low A (2 and PA0).
 	  
 ## Programming
 
-Connect the Arduino
-Select the board type from the Tools menu (eg Arduino nano)
-Select the processor type from the Tools menu (eg ATMega 328)
-Select the Serial port from the Tools menu
-Upload the sketch
+* Connect the Arduino
+* Select the board type from the Tools menu (eg Arduino nano)
+* Select the processor type from the Tools menu (eg ATMega 328)
+* Select the Serial port from the Tools menu
+* Upload the sketch
 
 ## Options
 
