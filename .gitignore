@@ -312,3 +312,7 @@ __pycache__/
 *.qbs*
 *build*
 *__vm*
+
+#ignore vs project too
+*.sln
+*.vcxproj*
