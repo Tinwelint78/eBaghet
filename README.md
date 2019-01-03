@@ -27,7 +27,7 @@ Then download the Arduino_STM32 repository from [Roger Clark Melbourne site](htt
 
 ## Configuration
 
-Open the Mozzi config file [Arduino dir]/libraries/Mozzi/mozzi_config.h
+Open the Mozzi config file [Arduino dir]/libraries/Mozzi/mozzi_config.h. 
 If you're using HIFI mode, find the line that says AUDIO_MODE and make sure the section of code looks like this:
 
           //#define AUDIO_MODE STANDARD
@@ -43,10 +43,11 @@ If you don't want to use HIFI mode, you can activate stereo hack, to have drone 
 
 		  #define STEREO_HACK true
 		
-Save mozzi_config.h
+Save mozzi_config.h.
 
-Start the Arduino IDE
-Open the eBaghet sketch from wherever it was unzipped (eBaghet.ino is the main sketch)
+Start the Arduino IDE.
+
+Open the eBaghet sketch from wherever it was unzipped (eBaghet.ino is the main sketch).
 
 At this point there are a few things that can be changed in the config file. To edit the file click on the 'eBaghet_config' file tab in the Arduino IDE.
 
@@ -77,7 +78,9 @@ If you leave DRONE_INT_STANDARD, the Baget starts with a G drone. If you substit
 Then you can chose which style of sensors you are using for the fingering:
 
 	  #define TOUCHMODE TOUCH_CAP
+	  
 With TOUCH_CAP, you use captouch sensor, with TOUCH_SWITCH standard pushbuttons and with TOUCH_MP121 the MP121 breakout board by [Adafruit](https://learn.adafruit.com/adafruit-mpr121-12-key-capacitive-touch-sensor-breakout-tutorial/overview). 
+
 NOTE: MP121 is not working with STM32 right now and I have tested just a little with Arduino Nano, so it is totally experimental.
 
 If you did use captouch style sensors, then at some point you may want to change the 4 on this line
@@ -89,19 +92,19 @@ to something a little higher or lower, depending on how the finger detection wor
 You can also decide relative volumes for drones and chanter for all instruments, modifying these lines:
 
 	  #define GHB_CHANTER_VOLUME	8
-	  #define GHB_DRONES_VOLUME		4
+	  #define GHB_DRONES_VOLUME	4
       
 	  #define BGT_CHANTER_VOLUME	8
-	  #define BGT_DRONES_VOLUME		4
+	  #define BGT_DRONES_VOLUME	4
       
 	  #define BRD_CHANTER_VOLUME	8
-	  #define BRD_DRONES_VOLUME		8
+	  #define BRD_DRONES_VOLUME	8
       
 	  #define SML_CHANTER_VOLUME	8
-	  #define SML_DRONES_VOLUME		8
+	  #define SML_DRONES_VOLUME	8
       
 	  #define UIL_CHANTER_VOLUME	8
-	  #define UIL_DRONES_VOLUME		8
+	  #define UIL_DRONES_VOLUME	8
 
 You can change the numbers to any value between 1 and 8 (1 is minimum volume, 8 is maximum volume).
 
@@ -117,17 +120,17 @@ They are ordered from high A (12 and PA7) to low A (2 and PA0).
 	  
 ## Programming
 
-* Connect the Arduino
-* Select the board type from the Tools menu (eg Arduino nano)
-* Select the processor type from the Tools menu (eg ATMega 328)
-* Select the Serial port from the Tools menu
-* Upload the sketch
+* Connect the Arduino.
+* Select the board type from the Tools menu (eg Arduino nano).
+* Select the processor type from the Tools menu (eg ATMega 328).
+* Select the Serial port from the Tools menu.
+* Upload the sketch.
 
 ## Options
 
 The eBaghet has several working mode depending on which keys you close when you turn on the chanter power:
 * If you don't close any key the chanter will start with the instrument defined by STARTING_INSTRUMENT (default Great Highland Bagpipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
-* If you close High A key, the chanter will start with the instrument defined by FIRST_INSTRUMENT (default Baghet) and with drones or not depending on STARTING_DRONES definition (default drones on) and with intonation defined by STARTING_DRONE_INT (default standard intonation, G drones).
+* If you close High A key, the chanter will start with the instrument defined by FIRST_INSTRUMENT (default Baghet), with drones or not depending on STARTING_DRONES definition (default drones on) and with intonation defined by STARTING_DRONE_INT (default standard intonation, G drones).
 * If you close High G key, the chanter will start with the instrument defined by SECOND_INSTRUMENT (default Border pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
 * If you close F key, the chanter will start with the instrument defined by THIRD_INSTRUMENT (default Small pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
 * If you close E key, the chanter will start with the instrument defined by FOURTH_INSTRUMENT (default Uillean pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
