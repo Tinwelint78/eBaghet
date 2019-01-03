@@ -1,80 +1,149 @@
 # eBaghet
-[English](README_EN.md)
 
-Progetto open souce di Baghet (cornamusa bergamasca) elettronica per Arduino.
+Open source electronic Baghet (Italian bagpipes) project for Arduino.
 
-Largamente basato su eChanter di Tim Malcolm 2010-2015 CC by-nc-sa. ([sito di eChanter](http://www.echanter.com/), [repository su Sourceforge](https://sourceforge.net/projects/echanter/))
+Largely based on eChanter by Tim Malcolm 2010-2015 CC by-nc-sa. ([echanter site](http://www.echanter.com/), [sourceforge repository](https://sourceforge.net/projects/echanter/))
 
-Audio basato sulla libreria e sugli esempi di Mozzi Synth
+Audio based on the Mozzi Synth libraries and examples
 Mozzi, Tim Barrass 2012, CC by-nc-sa.
 
-Il suono della Baghet è stato fornito e registrato da [Valter Biella](http://www.baghet.it/)
+Sound for the Baghet is provided by [Valter Biella](http://www.baghet.it/)
 
-## Istruzioni di montaggio:
-Per ora, seguite l'eccellente guida sul [sito di eChanter](http://www.echanter.com/home/howto-build).
+## Build instruction:
+For now, follow the excellent guide at [echanter site](http://www.echanter.com/home/howto-build).
 
-## Per programmare l'Arduino:
-Scaricate e installate il programma [Arduino IDE](https://www.arduino.cc/en/main/software) (tested on version 1.8.3)
+## To program the Arduino:
+Download and install the [Arduino IDE](https://www.arduino.cc/en/main/software) (tested on version 1.8.3)
 
-Scaricate e installate la libreria Mozzi dal [sito di Mozzi](http://sensorium.github.com/Mozzi/)
+Download and install my forked version of the Mozzi library from [this site](https://github.com/Tinwelint78/Mozzi)
 
-Aprite il file di configurazione della libreria Mozzi [Arduino dir]/libraries/Mozzi/mozzi_config.h
-Se state usando la moodalità HIFI, trovate le linee che contengono AUDIO_MODE e assicuratevi che siano così:
+## Additional step for STM32F1 (Blue Pill)
+
+The eBaghet source is compatible with Blue Pill (STM32F1), and can benefit from high resolution sound samples in this platform.
+
+To install and make STM32F1 work, follow the tutorial by [Luca Dentella](http://www.lucadentella.it/en/2017/07/13/stm32-e-arduino/).
+
+Then download the Arduino_STM32 repository from [Roger Clark Melbourne site](https://github.com/rogerclarkmelbourne/Arduino_STM32), unzip somewhere, rename the Arduino_STM32-master folder to Arduino_STM32 and move it to C:/Program Files (x86)/Arduino/hardware.
+
+## Configuration
+
+Open the Mozzi config file [Arduino dir]/libraries/Mozzi/mozzi_config.h
+If you're using HIFI mode, find the line that says AUDIO_MODE and make sure the section of code looks like this:
 
           //#define AUDIO_MODE STANDARD
           //#define AUDIO_MODE STANDARD_PLUS
           #define AUDIO_MODE HIFI
 
-Andate alle linee che contengono AUDIO_RATE e assicuratevi che siano così:
+Scroll down to AUDIO_RATE and make sure the section of code looks like this
 
           //#define AUDIO_RATE 16384
           #define AUDIO_RATE 32768
+		  
+If you don't want to use HIFI mode, you can activate stereo hack, to have drone sound on a channel and the chanter on another one, like this:
 
-Salvate mozzi_config.h
+		  #define STEREO_HACK true
+		
+Save mozzi_config.h
 
+Start the Arduino IDE
+Open the eBaghet sketch from wherever it was unzipped (eBaghet.ino is the main sketch)
 
-Aprite il programma Arduino IDE.
-Aprite lo sketch eBaghet da dove l'avete estratto (eBaghet.ino è lo sketch principale).
+At this point there are a few things that can be changed in the config file. To edit the file click on the 'eBaghet_config' file tab in the Arduino IDE.
 
-A questo punto ci sono alcune cose che potete cambiare nel file di configurazione. Per modificare il file, cliccate sulla linguetta 'eBaghet_config' nell'Arduino IDE. 
-Se non state usando i sensori capacitivi, cambiate la linea
+You can define order with which instruments are presented:
 
-      #define CAPTOUCH true
+	  #define STARTING_INSTRUMENT	GHB
+	  #define FIRST_INSTRUMENT	BGT
+	  #define SECOND_INSTRUMENT	BRD
+	  #define THIRD_INSTRUMENT	SML
+	  #define FOURTH_INSTRUMENT	UIL
 
- in
+GHB is Great Highland Bagpipes, BGT is Baghet, BRD is border pipes, SML is small pipes, UIL is Uillean pipes (sound only, fingering is like GHB).
 
-      #define CAPTOUCH false
+You can define if by default the chanter starts with a drone sound:
+	
+	  #define STARTING_DRONES	DRONE_ON
+	
+or not, modifying the line above to:
 
-Se state usando i sensori capacitivi, allora potreste dover cambiare la sensibilità dei sensori in questa linea:
+	  #define STARTING_DRONES	DRONE_OFF
 
-    #define CAPTOUCH_TRIGGER 6
+and you can chose the starting intonation of the drones for the Baghet:
 
-cambiando il 6 in un valore più alto o più basso a seconda di come funziona il riconoscimento del tocco.
+	  #define STARTING_DRONE_INT	DRONE_INT_STANDARD
 
-Connettete la scheda Arduino.
-Selezionate la scheda dal menù strumenti (es. Arduino nano).
-Selezionate il processore dal menù Strumenti (es. ATMega 328).
-Selezionate la porta seriale dal menù strumenti.
-Cliccate su "Carica".
+If you leave DRONE_INT_STANDARD, the Baget starts with a G drone. If you substitute with DRONE_INT_A, it starts with an A drone, and if you substitute with DRONE_INT_C, it starts with a C drone.
 
-## Opzioni
+Then you can chose which style of sensors you are using for the fingering:
 
-l'eBaghet ha diverse opzioni, selezionabili chiudendo alcuni tasti all'acensione:
-* Se non si chiude nessun tasto, il chanter parte con il suono e la diteggiatura del Baghet (in SOL), senza bordoni.
-* Se si chiude il tasto posterione (LA alto nella cornamusa), il chanter parte con il suono e la diteggiatura della cornamusa scozzese, senza bordoni.
-* Se si chiude il primo tasto in alto (SOL alto nella cornamusa), nel baghet vengono aggiunti i due bordoni (intonati in SOL), e nella cornamusa i tre bordoni (intonati in LA).
-* Se si chiude il secondo tasto in alto (FA nella cornamusa), in aggiunta al primo, solo nel baghet viene intonato il bordone maggiore sul LA, senza bordone minore.
-* Se si chiude il terzo tasto in alto (MI nella cornamusa), in aggiunta al primo, solo nel baghet viene intonato il bordone maggiore sul DO, senza bordone minore.
+	  #define TOUCHMODE TOUCH_CAP
+With TOUCH_CAP, you use captouch sensor, with TOUCH_SWITCH standard pushbuttons and with TOUCH_MP121 the MP121 breakout board by [Adafruit](https://learn.adafruit.com/adafruit-mpr121-12-key-capacitive-touch-sensor-breakout-tutorial/overview). 
+NOTE: MP121 is not working with STM32 right now and I have tested just a little with Arduino Nano, so it is totally experimental.
 
-## Diteggiatura
+If you did use captouch style sensors, then at some point you may want to change the 4 on this line
 
-La cornamusa scozzese segue questa diteggiatura:
+      #define CAPTOUCH_TRIGGER 4
+
+to something a little higher or lower, depending on how the finger detection works for you. For me, 4 is a good trigger level, but 6 also works OK.
+
+You can also decide relative volumes for drones and chanter for all instruments, modifying these lines:
+
+	  #define GHB_CHANTER_VOLUME	8
+	  #define GHB_DRONES_VOLUME		4
+      
+	  #define BGT_CHANTER_VOLUME	8
+	  #define BGT_DRONES_VOLUME		4
+      
+	  #define BRD_CHANTER_VOLUME	8
+	  #define BRD_DRONES_VOLUME		8
+      
+	  #define SML_CHANTER_VOLUME	8
+	  #define SML_DRONES_VOLUME		8
+      
+	  #define UIL_CHANTER_VOLUME	8
+	  #define UIL_DRONES_VOLUME		8
+
+You can change the numbers to any value between 1 and 8 (1 is minimum volume, 8 is maximum volume).
+
+Last thing you can change are the pins where the eight finger sensors are connected. There is one line for STM32 and one for other Arduino boards:
+
+	  #if IS_STM32()
+	  int sensor_pins[] = {PA7, PA6, PA5, PA4, PA3, PA2, PA1, PA0};
+	  #else
+	  int sensor_pins[] = { 12, 8, 7, 6, 5, 4, 3, 2 };
+	  #endif
+	  
+They are ordered from high A (12 and PA7) to low A (2 and PA0). 
+	  
+## Programming
+
+Connect the Arduino
+Select the board type from the Tools menu (eg Arduino nano)
+Select the processor type from the Tools menu (eg ATMega 328)
+Select the Serial port from the Tools menu
+Upload the sketch
+
+## Options
+
+The eBaghet has several working mode depending on which keys you close when you turn on the chanter power:
+* If you don't close any key the chanter will start with the instrument defined by STARTING_INSTRUMENT (default Great Highland Bagpipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
+* If you close High A key, the chanter will start with the instrument defined by FIRST_INSTRUMENT (default Baghet) and with drones or not depending on STARTING_DRONES definition (default drones on) and with intonation defined by STARTING_DRONE_INT (default standard intonation, G drones).
+* If you close High G key, the chanter will start with the instrument defined by SECOND_INSTRUMENT (default Border pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
+* If you close F key, the chanter will start with the instrument defined by THIRD_INSTRUMENT (default Small pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
+* If you close E key, the chanter will start with the instrument defined by FOURTH_INSTRUMENT (default Uillean pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
+* If you close D key, the drones will be turned off or on depending on the reverse of what is defined by STARTING_DRONES (default drones off).
+* If you close C key and the instrument is Baghet, the drones will change intonation to A. if DRONE_INT_A is defined as STARTING_DRONE_INT, the drones will return to normal G intonation.
+* If you close B key and the instrument is Baghet, the drones will change intonation to C. if DRONE_INT_C is defined as STARTING_DRONE_INT, the drones will return to normal G intonation.
+
+## Fingering
+
+Great Highland Bagpipes, border pipes, small pipes and Uillean pipes follow this finger chart:
 
 ![GHB](docs/GHB.png)
 
 
-Il Baghet segue questa diteggiatura (rilevata dal [Manuale del Baghet](http://www.baghet.it/manuale%20baghet%202012.pdf) di Valter Biella):
+For the Baghet, follow this finger chart (According to [Manuale del Baghet](http://www.baghet.it/manuale%20baghet%202012.pdf) by Valter Biella):
 
 ![Baghet](docs/Baghet.png)
 
-I tasti tratteggiati possono essere chiusi o aperti, a seconda della comodità di posizione.
+Dashed keys can be closed or open as comfort of position needs.
