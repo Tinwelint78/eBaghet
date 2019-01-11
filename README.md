@@ -1,6 +1,6 @@
 # eBaghet
 
-Open source electronic Baghet (Italian bagpipes) project for Arduino.
+Open source electronic pipes project for Arduino. Currently include Baghet (italian bagpipes), Great Highland Bagpipes, Small Pipes, Border Pipes and Uillean Pipes (still in developement).
 
 Largely based on eChanter by Tim Malcolm 2010-2015 CC by-nc-sa. ([echanter site](http://www.echanter.com/), [sourceforge repository](https://sourceforge.net/projects/echanter/))
 
