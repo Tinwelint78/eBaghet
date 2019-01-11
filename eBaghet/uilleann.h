@@ -30,7 +30,7 @@ int note_ratios_UIL[table_len_UIL][2] =
 	{ 4, 3 }, 	/* D  */
 };
 
-float note_freqs_UIL[table_len_UIL] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+float note_freqs_UIL[table_len_UIL] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 #define INST_NUM_CELLS_UIL 230
 #define DRONE_NUM_CELLS_UIL 804

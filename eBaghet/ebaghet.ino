@@ -733,31 +733,31 @@ void updateControl()
 			}
 			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
 			{
-				note_detected = 2;
+				note_detected = 3;
 			}
 			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
 			{
-				note_detected = 3;
+				note_detected = 4;
 			}
 			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
 			{
-				note_detected = 4;
+				note_detected = 5;
 			}
 			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
 			{
-				note_detected = 5;
+				note_detected = 6;
 			}
 			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
 			{
-				note_detected = 6;
+				note_detected = 7;
 			}
 			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
 			{
-				note_detected = 7;
+				note_detected = 8;
 			}
 			else
 			{
-				/* LG or no note? */ note_detected = 8;
+				/* LG or no note? */ note_detected = 9;
 			}
 		}
 	}
