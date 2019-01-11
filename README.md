@@ -25,6 +25,8 @@ To install and make STM32F1 work, follow the tutorial by [Luca Dentella](http://
 
 Then download the Arduino_STM32 repository from [Roger Clark Melbourne site](https://github.com/rogerclarkmelbourne/Arduino_STM32), unzip somewhere, rename the Arduino_STM32-master folder to Arduino_STM32 and move it to C:/Program Files (x86)/Arduino/hardware.
 
+If you want to use MPR12, download and install my library from [this site](https://github.com/Tinwelint78/Adafruit_MPR121_STM32)
+
 ## Configuration
 
 Open the Mozzi config file [Arduino dir]/libraries/Mozzi/mozzi_config.h. 
@@ -59,7 +61,7 @@ You can define order with which instruments are presented:
 	  #define THIRD_INSTRUMENT	SML
 	  #define FOURTH_INSTRUMENT	UIL
 
-GHB is Great Highland Bagpipes, BGT is Baghet, BRD is border pipes, SML is small pipes, UIL is Uillean pipes (sound only, fingering is like GHB).
+GHB is Great Highland Bagpipes, BGT is Baghet, BRD is border pipes, SML is small pipes, UIL is Uilleann pipes.
 
 You can define if by default the chanter starts with a drone sound:
 	
@@ -133,17 +135,20 @@ The eBaghet has several working mode depending on which keys you close when you 
 * If you close High A key, the chanter will start with the instrument defined by FIRST_INSTRUMENT (default Baghet), with drones or not depending on STARTING_DRONES definition (default drones on) and with intonation defined by STARTING_DRONE_INT (default standard intonation, G drones).
 * If you close High G key, the chanter will start with the instrument defined by SECOND_INSTRUMENT (default Border pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
 * If you close F key, the chanter will start with the instrument defined by THIRD_INSTRUMENT (default Small pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
-* If you close E key, the chanter will start with the instrument defined by FOURTH_INSTRUMENT (default Uillean pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
+* If you close E key, the chanter will start with the instrument defined by FOURTH_INSTRUMENT (default Uilleann pipes) and with drones or not depending on STARTING_DRONES definition (default drones on).
 * If you close D key, the drones will be turned off or on depending on the reverse of what is defined by STARTING_DRONES (default drones off).
 * If you close C key and the instrument is Baghet, the drones will change intonation to A. if DRONE_INT_A is defined as STARTING_DRONE_INT, the drones will return to normal G intonation.
 * If you close B key and the instrument is Baghet, the drones will change intonation to C. if DRONE_INT_C is defined as STARTING_DRONE_INT, the drones will return to normal G intonation.
 
 ## Fingering
 
-Great Highland Bagpipes, border pipes, small pipes and Uillean pipes follow this finger chart:
+Great Highland Bagpipes, border pipes and small pipes follow this finger chart:
 
 ![GHB](docs/GHB.png)
 
+For Uilleann Pipes follow this finger chart:
+
+![UIL](docs/UIL.png)
 
 For the Baghet, follow this finger chart (According to [Manuale del Baghet](http://www.baghet.it/manuale%20baghet%202012.pdf) by Valter Biella):
 

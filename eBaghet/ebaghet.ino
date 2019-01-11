@@ -28,7 +28,7 @@
 
 #include <MozziGuts.h>
 #if IS_STM32()
-#include "Sample16.h" // Sample template
+#include <Sample16.h> // Sample template
 #else
 #include <Sample.h> // Sample template
 #endif
@@ -39,11 +39,16 @@
 #include "baghet.h"
 #include "border.h"
 #include "smallpipe.h"
-#include "uillean.h"
+#include "uilleann.h"
 
-#if (TOUCHMODE == TOUCH_MP121)
+#if (TOUCHMODE == TOUCH_MPR121)
+#if IS_STM32()
+#include <SoftWire.h>
+#include <Adafruit_MPR121_STM32.h>
+#else 
 #include <Wire.h>
 #include <Adafruit_MPR121.h>
+#endif
 #endif
 
 #define CONTROL_RATE 256 //512 // 64 // powers of 2 please
@@ -84,8 +89,12 @@ int instrument = STARTING_INSTRUMENT;
 byte usedrones = STARTING_DRONES;
 byte droneintonation = STARTING_DRONE_INT;
 
-#if (TOUCHMODE == TOUCH_MP121)
+#if (TOUCHMODE == TOUCH_MPR121)
+#if IS_STM32()
+Adafruit_MPR121_STM32 cap = Adafruit_MPR121_STM32();
+#else
 Adafruit_MPR121 cap = Adafruit_MPR121();
+#endif
 #ifndef _BV
 #define _BV(bit) (1 << (bit))
 #endif
@@ -108,7 +117,7 @@ void setup()
 	pinMode ( sensor_pins[5], INPUT );
 	pinMode ( sensor_pins[6], INPUT );
 	pinMode ( sensor_pins[7], INPUT );
-#elif (TOUCHMODE == TOUCH_MP121)
+#elif (TOUCHMODE == TOUCH_MPR121)
 	cap.begin ( 0x5A );
 #endif
 #if (TOUCHMODE == TOUCH_CAP)
@@ -168,7 +177,7 @@ void setup()
 		}
 	}
 
-#elif (TOUCHMODE == TOUCH_MP121)
+#elif (TOUCHMODE == TOUCH_MPR121)
 	uint16_t currtouched = cap.touched();
 
 	if ( currtouched & _BV ( 0 ) )
@@ -296,7 +305,7 @@ void setup()
 		if ( usedrones != DRONE_OFF )
 		{
 			droneGHB.setLoopingOn();
-			droneGHB.setFreq ( ( float ) INST_SAMPLERATE_GHB / DRONE_NUM_CELLS_GHB ); // set the frequency
+			droneGHB.setFreq ( ( float ) INST_SAMPLERATE_GHB / DRONE_NUM_CELLS_GHB * 0.99736842105263f ); // set the frequency
 		}
 	}
 	else if ( instrument == BGT )
@@ -355,7 +364,7 @@ void setup()
 		if ( usedrones != DRONE_OFF )
 		{
 			droneUIL.setLoopingOn();
-			droneUIL.setFreq ( ( float ) INST_SAMPLERATE_UIL / DRONE_NUM_CELLS_UIL ); // set the frequency
+			droneUIL.setFreq ( ( float ) INST_SAMPLERATE_UIL / DRONE_NUM_CELLS_UIL * 4.0f / 3.0f ); // set the frequency (drones on D)
 		}
 	}
 }
@@ -377,21 +386,21 @@ void set_freqs ( )
 		note_freqs_GHB[i] = ( f * note_ratios_GHB[i][0] ) / note_ratios_GHB[i][1];
 	}
 
-	f = INST_SAMPLERATE_BRD / INST_NUM_CELLS_BRD;
+	f = INST_SAMPLERATE_BRD / INST_NUM_CELLS_BRD * 1.14f;
 
 	for ( i = 0; i < table_len_BRD; i++ )
 	{
 		note_freqs_BRD[i] = ( f * note_ratios_BRD[i][0] ) / note_ratios_BRD[i][1];
 	}
 
-	f = INST_SAMPLERATE_SML / INST_NUM_CELLS_SML;
+	f = INST_SAMPLERATE_SML / INST_NUM_CELLS_SML * 1.1378882f;
 
 	for ( i = 0; i < table_len_SML; i++ )
 	{
 		note_freqs_SML[i] = ( f * note_ratios_SML[i][0] ) / note_ratios_SML[i][1];
 	}
 
-	f = INST_SAMPLERATE_UIL / INST_NUM_CELLS_UIL;
+	f = INST_SAMPLERATE_UIL / INST_NUM_CELLS_UIL * 1.1442786f;
 
 	for ( i = 0; i < table_len_UIL; i++ )
 	{
@@ -429,7 +438,7 @@ void updateControl()
 		return;
 	}
 
-#elif (TOUCHMODE == TOUCH_MP121)
+#elif (TOUCHMODE == TOUCH_MPR121)
 	fmap = cap.touched();
 	fmap &= B11111111;
 #else

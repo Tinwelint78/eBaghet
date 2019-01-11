@@ -10,8 +10,7 @@
  *
  * STARTING_INSTRUMENT/FIRST_INSTRUMENT/SECOND_INSTRUMENT/THIRD_INSTRUMENT/FOURTH_INSTRUMENT
  *	Selectable starting instrument and other instruments that can be chosen closing some keys
- *	Can be any of BGT (baghet), GHB (Great Highland Bagpipe), BRD (border pipe), SML (small pipe) or UIL (uillean pipe).
- *	Uillean pipe for now has great highland bagpipe fingering
+ *	Can be any of BGT (baghet), GHB (Great Highland Bagpipe), BRD (border pipe), SML (small pipe) or UIL (uilleann pipe).
  *
  * sensor_pins
  *    Digital inputs for sensors or buttons,
@@ -49,7 +48,7 @@
 #define BGT 200				// Baghet
 #define BRD 300				// Border Pipe
 #define SML 400				// Small Pipe
-#define UIL 500				// Uillean Pipe
+#define UIL 500				// Uilleann Pipe
 #define STARTING_INSTRUMENT	GHB
 #define FIRST_INSTRUMENT	BGT
 #define SECOND_INSTRUMENT	BRD
@@ -67,10 +66,11 @@
 
 #define TOUCH_SWITCH	0
 #define TOUCH_CAP		1
-#define TOUCH_MP121		2
+#define TOUCH_MPR121	2
 // NOTE: for MP121 to work with Arduino, twi_nonblock.h and twi_nonblock.cpp must be deleted from Mozzi library!
+// NOTE: TOUCH_CAP is not working with STM32
 #define TOUCHMODE TOUCH_CAP
-#define CAPTOUCH_TRIGGER 4
+#define CAPTOUCH_TRIGGER 3
 
 // relative volumes 1-8
 #define GHB_CHANTER_VOLUME	8
@@ -87,6 +87,8 @@
 
 #define UIL_CHANTER_VOLUME	8
 #define UIL_DRONES_VOLUME	8
+
+#define START_CHANTER_AFTERWARDS	true
 
 int num_sensors = 8;
 #if IS_STM32()
