@@ -34,7 +34,7 @@ float note_freqs_BRD[table_len_BRD] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 #define DRONE_NUM_CELLS_BRD 400
 #define INST_SAMPLERATE_BRD 44100
 
-#if IS_STM32()
+#if USE_16BIT_SAMPLES
 
 const int16_t __attribute__ ( ( section ( ".progmem.data" ) ) ) INST_DATA_BRD[] =
 {

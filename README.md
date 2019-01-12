@@ -19,7 +19,7 @@ Download and install my forked version of the Mozzi library from [this site](htt
 
 ## Additional step for STM32F1 (Blue Pill)
 
-The eBaghet source is compatible with Blue Pill (STM32F1), and can benefit from high resolution sound samples in this platform.
+The eBaghet source is compatible and tested with Blue Pill (STM32F1).
 
 To install and make STM32F1 work, follow the tutorial by [Luca Dentella](http://www.lucadentella.it/en/2017/07/13/stm32-e-arduino/).
 
@@ -52,6 +52,10 @@ Start the Arduino IDE.
 Open the eBaghet sketch from wherever it was unzipped (eBaghet.ino is the main sketch).
 
 At this point there are a few things that can be changed in the config file. To edit the file click on the 'eBaghet_config' file tab in the Arduino IDE.
+
+You can use high resolution samples by defining:
+
+	  #define USE_16BIT_SAMPLES true
 
 You can define order with which instruments are presented:
 

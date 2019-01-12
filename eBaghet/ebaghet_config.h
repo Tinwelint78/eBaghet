@@ -5,12 +5,16 @@
  *		TOUCH_CAP		capacitive sensors
  *		TOUCH_MP121		Adafruit MP121 board
  *
+ * USE_16BIT_SAMPLES
+ *  define this to true to use high resolution samples
+ *
  * CAPTOUCH_TRIGGER  0-16
  *	Values in the range 6-8 tend to work well
  *
  * STARTING_INSTRUMENT/FIRST_INSTRUMENT/SECOND_INSTRUMENT/THIRD_INSTRUMENT/FOURTH_INSTRUMENT
  *	Selectable starting instrument and other instruments that can be chosen closing some keys
  *	Can be any of BGT (baghet), GHB (Great Highland Bagpipe), BRD (border pipe), SML (small pipe) or UIL (uilleann pipe).
+ *  You can even define less instrument if you have memory issues
  *
  * sensor_pins
  *    Digital inputs for sensors or buttons,
@@ -43,6 +47,7 @@
 #ifndef EBAGHET_CONFIG_H_
 #define EBAGHET_CONFIG_H_
 
+#define USE_16BIT_SAMPLES true
 
 #define GHB 100				// Great Highland Bagpipe
 #define BGT 200				// Baghet
@@ -54,6 +59,39 @@
 #define SECOND_INSTRUMENT	BRD
 #define THIRD_INSTRUMENT	SML
 #define FOURTH_INSTRUMENT	UIL
+
+// macro definitions for check instrument use (DO NOT MODIFY THIS)
+#if (!defined(FIRST_INSTRUMENT))
+#define GHB_IN_USE()	(STARTING_INSTRUMENT == GHB)
+#define BGT_IN_USE()	(STARTING_INSTRUMENT == BGT)
+#define BRD_IN_USE()	(STARTING_INSTRUMENT == BRD)
+#define SML_IN_USE()	(STARTING_INSTRUMENT == SML)
+#define UIL_IN_USE()	(STARTING_INSTRUMENT == UIL)
+#elif (!defined(SECOND_INSTRUMENT))
+#define GHB_IN_USE()	((STARTING_INSTRUMENT == GHB) || (FIRST_INSTRUMENT == GHB))
+#define BGT_IN_USE()	((STARTING_INSTRUMENT == BGT) || (FIRST_INSTRUMENT == BGT))
+#define BRD_IN_USE()	((STARTING_INSTRUMENT == BRD) || (FIRST_INSTRUMENT == BRD))
+#define SML_IN_USE()	((STARTING_INSTRUMENT == SML) || (FIRST_INSTRUMENT == SML))
+#define UIL_IN_USE()	((STARTING_INSTRUMENT == UIL) || (FIRST_INSTRUMENT == UIL))
+#elif(!defined(THIRD_INSTRUMENT))
+#define GHB_IN_USE()	((STARTING_INSTRUMENT == GHB) || (FIRST_INSTRUMENT == GHB) || (SECOND_INSTRUMENT == GHB))
+#define BGT_IN_USE()	((STARTING_INSTRUMENT == BGT) || (FIRST_INSTRUMENT == BGT) || (SECOND_INSTRUMENT == BGT))
+#define BRD_IN_USE()	((STARTING_INSTRUMENT == BRD) || (FIRST_INSTRUMENT == BRD) || (SECOND_INSTRUMENT == BRD))
+#define SML_IN_USE()	((STARTING_INSTRUMENT == SML) || (FIRST_INSTRUMENT == SML) || (SECOND_INSTRUMENT == SML))
+#define UIL_IN_USE()	((STARTING_INSTRUMENT == UIL) || (FIRST_INSTRUMENT == UIL) || (SECOND_INSTRUMENT == UIL))
+#elif (!defined(FOURTH_INSTRUMENT))
+#define GHB_IN_USE()	((STARTING_INSTRUMENT == GHB) || (FIRST_INSTRUMENT == GHB) || (SECOND_INSTRUMENT == GHB) || (THIRD_INSTRUMENT == GHB))
+#define BGT_IN_USE()	((STARTING_INSTRUMENT == BGT) || (FIRST_INSTRUMENT == BGT) || (SECOND_INSTRUMENT == BGT) || (THIRD_INSTRUMENT == BGT))
+#define BRD_IN_USE()	((STARTING_INSTRUMENT == BRD) || (FIRST_INSTRUMENT == BRD) || (SECOND_INSTRUMENT == BRD) || (THIRD_INSTRUMENT == BRD))
+#define SML_IN_USE()	((STARTING_INSTRUMENT == SML) || (FIRST_INSTRUMENT == SML) || (SECOND_INSTRUMENT == SML) || (THIRD_INSTRUMENT == SML))
+#define UIL_IN_USE()	((STARTING_INSTRUMENT == UIL) || (FIRST_INSTRUMENT == UIL) || (SECOND_INSTRUMENT == UIL) || (THIRD_INSTRUMENT == UIL))
+#else
+#define GHB_IN_USE()	((STARTING_INSTRUMENT == GHB) || (FIRST_INSTRUMENT == GHB) || (SECOND_INSTRUMENT == GHB) || (THIRD_INSTRUMENT == GHB) || (FOURTH_INSTRUMENT == GHB))
+#define BGT_IN_USE()	((STARTING_INSTRUMENT == BGT) || (FIRST_INSTRUMENT == BGT) || (SECOND_INSTRUMENT == BGT) || (THIRD_INSTRUMENT == BGT) || (FOURTH_INSTRUMENT == BGT))
+#define BRD_IN_USE()	((STARTING_INSTRUMENT == BRD) || (FIRST_INSTRUMENT == BRD) || (SECOND_INSTRUMENT == BRD) || (THIRD_INSTRUMENT == BRD) || (FOURTH_INSTRUMENT == BRD))
+#define SML_IN_USE()	((STARTING_INSTRUMENT == SML) || (FIRST_INSTRUMENT == SML) || (SECOND_INSTRUMENT == SML) || (THIRD_INSTRUMENT == SML) || (FOURTH_INSTRUMENT == SML))
+#define UIL_IN_USE()	((STARTING_INSTRUMENT == UIL) || (FIRST_INSTRUMENT == UIL) || (SECOND_INSTRUMENT == UIL) || (THIRD_INSTRUMENT == UIL) || (FOURTH_INSTRUMENT == UIL))
+#endif
 
 #define DRONE_OFF		0
 #define DRONE_ON		1
@@ -80,13 +118,13 @@
 #define BGT_DRONES_VOLUME	4
 
 #define BRD_CHANTER_VOLUME	8
-#define BRD_DRONES_VOLUME	8
+#define BRD_DRONES_VOLUME	4
 
 #define SML_CHANTER_VOLUME	8
-#define SML_DRONES_VOLUME	8
+#define SML_DRONES_VOLUME	4
 
 #define UIL_CHANTER_VOLUME	8
-#define UIL_DRONES_VOLUME	8
+#define UIL_DRONES_VOLUME	4
 
 #define START_CHANTER_AFTERWARDS	true
 
@@ -96,6 +134,8 @@ int sensor_pins[] = {PA7, PA6, PA5, PA4, PA3, PA2, PA1, PA0};
 #else
 int sensor_pins[] = { 12, 8, 7, 6, 5, 4, 3, 2 };
 #endif
+
+
 
 
 #endif /* EBAGHET_CONFIG_H_ */

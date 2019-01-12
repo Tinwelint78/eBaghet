@@ -34,7 +34,7 @@ float note_freqs_SML[table_len_SML] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 #define DRONE_NUM_CELLS_SML 805
 #define INST_SAMPLERATE_SML 44100
 
-#if IS_STM32()
+#if USE_16BIT_SAMPLES
 
 const int16_t __attribute__ ( ( section ( ".progmem.data" ) ) ) INST_DATA_SML[] =
 {

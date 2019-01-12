@@ -27,25 +27,35 @@
 */
 
 #include <MozziGuts.h>
-#if IS_STM32()
+#include "ebaghet_config.h"
+#if USE_16BIT_SAMPLES
 #include <Sample16.h> // Sample template
 #else
 #include <Sample.h> // Sample template
 #endif
 
 
-#include "ebaghet_config.h"
+#if GHB_IN_USE()
 #include "ghb.h"
+#endif
+#if BGT_IN_USE()
 #include "baghet.h"
+#endif
+#if BRD_IN_USE()
 #include "border.h"
+#endif
+#if SML_IN_USE()
 #include "smallpipe.h"
+#endif
+#if UIL_IN_USE()
 #include "uilleann.h"
+#endif
 
 #if (TOUCHMODE == TOUCH_MPR121)
 #if IS_STM32()
 #include <SoftWire.h>
 #include <Adafruit_MPR121_STM32.h>
-#else 
+#else
 #include <Wire.h>
 #include <Adafruit_MPR121.h>
 #endif
@@ -53,30 +63,51 @@
 
 #define CONTROL_RATE 256 //512 // 64 // powers of 2 please
 
-#if IS_STM32()
+#if USE_16BIT_SAMPLES
+#if GHB_IN_USE()
 Sample16 <INST_NUM_CELLS_GHB, AUDIO_RATE>instrumentGHB ( INST_DATA_GHB );
 Sample16 <DRONE_NUM_CELLS_GHB, AUDIO_RATE>droneGHB ( DRONE_DATA_GHB );
+#endif
+#if BGT_IN_USE()
 Sample16 <INST_NUM_CELLS_BGT, AUDIO_RATE>instrumentBGT ( INST_DATA_BGT );
-Sample16 <DRONE_MIN_NUM_CELLS_BGT, AUDIO_RATE>droneminBGT ( DRONE_MIN_DATA_BGT );
+//Sample16 <DRONE_MAJ_NUM_CELLS_BGT, AUDIO_RATE>droneminBGT ( DRONE_MAJ_DATA_BGT );
 Sample16 <DRONE_MAJ_NUM_CELLS_BGT, AUDIO_RATE>dronemajBGT ( DRONE_MAJ_DATA_BGT );
+Sample16 <DRONE_ALL_NUM_CELLS_BGT, AUDIO_RATE>droneBGT ( DRONE_ALL_DATA_BGT );
+#endif
+#if BRD_IN_USE()
 Sample16 <INST_NUM_CELLS_BRD, AUDIO_RATE>instrumentBRD ( INST_DATA_BRD );
 Sample16 <DRONE_NUM_CELLS_BRD, AUDIO_RATE>droneBRD ( DRONE_DATA_BRD );
+#endif
+#if SML_IN_USE()
 Sample16 <INST_NUM_CELLS_SML, AUDIO_RATE>instrumentSML ( INST_DATA_SML );
 Sample16 <DRONE_NUM_CELLS_SML, AUDIO_RATE>droneSML ( DRONE_DATA_SML );
+#endif
+#if UIL_IN_USE()
 Sample16 <INST_NUM_CELLS_UIL, AUDIO_RATE>instrumentUIL ( INST_DATA_UIL );
 Sample16 <DRONE_NUM_CELLS_UIL, AUDIO_RATE>droneUIL ( DRONE_DATA_UIL );
+#endif
 #else
+#if GHB_IN_USE()
 Sample <INST_NUM_CELLS_GHB, AUDIO_RATE>instrumentGHB ( INST_DATA_GHB );
 Sample <DRONE_NUM_CELLS_GHB, AUDIO_RATE>droneGHB ( DRONE_DATA_GHB );
+#endif
+#if BGT_IN_USE()
 Sample <INST_NUM_CELLS_BGT, AUDIO_RATE>instrumentBGT ( INST_DATA_BGT );
 Sample <DRONE_MIN_NUM_CELLS_BGT, AUDIO_RATE>droneminBGT ( DRONE_MIN_DATA_BGT );
 Sample <DRONE_MAJ_NUM_CELLS_BGT, AUDIO_RATE>dronemajBGT ( DRONE_MAJ_DATA_BGT );
+#endif
+#if BRD_IN_USE()
 Sample <INST_NUM_CELLS_BRD, AUDIO_RATE>instrumentBRD ( INST_DATA_BRD );
 Sample <DRONE_NUM_CELLS_BRD, AUDIO_RATE>droneBRD ( DRONE_DATA_BRD );
+#endif
+#if SML_IN_USE()
 Sample <INST_NUM_CELLS_SML, AUDIO_RATE>instrumentSML ( INST_DATA_SML );
 Sample <DRONE_NUM_CELLS_SML, AUDIO_RATE>droneSML ( DRONE_DATA_SML );
+#endif
+#if UIL_IN_USE()
 Sample <INST_NUM_CELLS_UIL, AUDIO_RATE>instrumentUIL ( INST_DATA_UIL );
 Sample <DRONE_NUM_CELLS_UIL, AUDIO_RATE>droneUIL ( DRONE_DATA_UIL );
+#endif
 #endif
 
 int curr_sensor = 0;
@@ -121,23 +152,35 @@ void setup()
 	cap.begin ( 0x5A );
 #endif
 #if (TOUCHMODE == TOUCH_CAP)
+#if defined(FIRST_INSTRUMENT)
 
 	if ( readCapacitivePin ( sensor_pins[0] ) >= CAPTOUCH_TRIGGER )
 	{
 		instrument = FIRST_INSTRUMENT;
 	}
+
+#if defined(SECOND_INSTRUMENT)
 	else if ( readCapacitivePin ( sensor_pins[1] ) >= CAPTOUCH_TRIGGER )
 	{
 		instrument = SECOND_INSTRUMENT;
 	}
+
+#if defined (THIRD_INSTRUMENT)
 	else if ( readCapacitivePin ( sensor_pins[2] ) >= CAPTOUCH_TRIGGER )
 	{
 		instrument = THIRD_INSTRUMENT;
 	}
+
+#if defined (FOURTH_INSTRUMENT)
 	else if ( readCapacitivePin ( sensor_pins[3] ) >= CAPTOUCH_TRIGGER )
 	{
 		instrument = FOURTH_INSTRUMENT;
 	}
+
+#endif	//defined (FOURTH_INSTRUMENT)
+#endif	//defined (THIRD_INSTRUMENT)
+#endif	//defined(SECOND_INSTRUMENT)
+#endif	//defined(FIRST_INSTRUMENT)
 
 	if ( readCapacitivePin ( sensor_pins[4] ) >= CAPTOUCH_TRIGGER )
 	{
@@ -179,23 +222,35 @@ void setup()
 
 #elif (TOUCHMODE == TOUCH_MPR121)
 	uint16_t currtouched = cap.touched();
+#if defined(FIRST_INSTRUMENT)
 
 	if ( currtouched & _BV ( 0 ) )
 	{
 		instrument = FIRST_INSTRUMENT;
 	}
+
+#if defined(SECOND_INSTRUMENT)
 	else if ( currtouched & _BV ( 1 ) )
 	{
 		instrument = SECOND_INSTRUMENT;
 	}
+
+#if defined (THIRD_INSTRUMENT)
 	else if ( currtouched & _BV ( 2 ) )
 	{
 		instrument = THIRD_INSTRUMENT;
 	}
+
+#if defined (FOURTH_INSTRUMENT)
 	else if ( currtouched & _BV ( 3 ) )
 	{
 		instrument = FOURTH_INSTRUMENT;
 	}
+
+#endif	//defined (FOURTH_INSTRUMENT)
+#endif	//defined (THIRD_INSTRUMENT)
+#endif	//defined(SECOND_INSTRUMENT)
+#endif	//defined(FIRST_INSTRUMENT)
 
 	if ( currtouched & _BV ( 4 ) )
 	{
@@ -236,23 +291,35 @@ void setup()
 	}
 
 #else
+#if defined(FIRST_INSTRUMENT)
 
 	if ( digitalRead ( sensor_pins[0] ) == LOW )
 	{
 		instrument = FIRST_INSTRUMENT;
 	}
+
+#if defined(SECOND_INSTRUMENT)
 	else if ( digitalRead ( sensor_pins[1] ) == LOW )
 	{
 		instrument = SECOND_INSTRUMENT;
 	}
+
+#if defined (THIRD_INSTRUMENT)
 	else if ( digitalRead ( sensor_pins[2] ) == LOW )
 	{
 		instrument = THIRD_INSTRUMENT;
 	}
+
+#if defined (FOURTH_INSTRUMENT)
 	else if ( digitalRead ( sensor_pins[3] ) == LOW )
 	{
 		instrument = FOURTH_INSTRUMENT;
 	}
+
+#endif	//defined (FOURTH_INSTRUMENT)
+#endif	//defined (THIRD_INSTRUMENT)
+#endif	//defined(SECOND_INSTRUMENT)
+#endif	//defined(FIRST_INSTRUMENT)
 
 	if ( digitalRead ( sensor_pins[4] ) == LOW )
 	{
@@ -299,6 +366,7 @@ void setup()
 
 	if ( instrument == GHB )
 	{
+#if GHB_IN_USE()
 		instrumentGHB.setLoopingOn();
 		instrumentGHB.setFreq ( note_freqs_GHB[0] ); // set the frequency
 
@@ -307,9 +375,12 @@ void setup()
 			droneGHB.setLoopingOn();
 			droneGHB.setFreq ( ( float ) INST_SAMPLERATE_GHB / DRONE_NUM_CELLS_GHB * 0.99736842105263f ); // set the frequency
 		}
+
+#endif
 	}
 	else if ( instrument == BGT )
 	{
+#if BGT_IN_USE()
 		instrumentBGT.setLoopingOn();
 		instrumentBGT.setFreq ( note_freqs_BGT[0] ); // set the frequency
 
@@ -317,10 +388,8 @@ void setup()
 		{
 			if ( droneintonation == DRONE_INT_STANDARD )
 			{
-				droneminBGT.setLoopingOn();
-				droneminBGT.setFreq ( ( float ) INST_SAMPLERATE_BGT / DRONE_MIN_NUM_CELLS_BGT ); // set the frequency
-				dronemajBGT.setLoopingOn();
-				dronemajBGT.setFreq ( ( float ) INST_SAMPLERATE_BGT / DRONE_MAJ_NUM_CELLS_BGT ); // set the frequency
+				droneBGT.setLoopingOn();
+				droneBGT.setFreq ( ( float ) INST_SAMPLERATE_BGT / DRONE_ALL_NUM_CELLS_BGT ); // set the frequency
 			}
 			else if ( usedrones == DRONE_INT_A )
 			{
@@ -333,9 +402,12 @@ void setup()
 				dronemajBGT.setFreq ( ( float ) INST_SAMPLERATE_BGT / DRONE_MAJ_NUM_CELLS_BGT * 1.35f ); // set the frequency to C (9/8 * 6/5 G)
 			}
 		}
+
+#endif
 	}
 	else if ( instrument == BRD )
 	{
+#if BRD_IN_USE()
 		instrumentBRD.setLoopingOn();
 		instrumentBRD.setFreq ( note_freqs_BRD[0] ); // set the frequency
 
@@ -344,9 +416,12 @@ void setup()
 			droneBRD.setLoopingOn();
 			droneBRD.setFreq ( ( float ) INST_SAMPLERATE_BRD / DRONE_NUM_CELLS_BRD ); // set the frequency
 		}
+
+#endif
 	}
 	else if ( instrument == SML )
 	{
+#if SML_IN_USE()
 		instrumentSML.setLoopingOn();
 		instrumentSML.setFreq ( note_freqs_SML[0] ); // set the frequency
 
@@ -355,9 +430,12 @@ void setup()
 			droneSML.setLoopingOn();
 			droneSML.setFreq ( ( float ) INST_SAMPLERATE_SML / DRONE_NUM_CELLS_SML ); // set the frequency
 		}
+
+#endif
 	}
 	else if ( instrument == UIL )
 	{
+#if UIL_IN_USE()
 		instrumentUIL.setLoopingOn();
 		instrumentUIL.setFreq ( note_freqs_UIL[0] ); // set the frequency
 
@@ -366,19 +444,16 @@ void setup()
 			droneUIL.setLoopingOn();
 			droneUIL.setFreq ( ( float ) INST_SAMPLERATE_UIL / DRONE_NUM_CELLS_UIL * 4.0f / 3.0f ); // set the frequency (drones on D)
 		}
+
+#endif
 	}
 }
 
 void set_freqs ( )
 {
 	// setup freq. tables
-	float f = INST_SAMPLERATE_BGT / INST_NUM_CELLS_BGT;
-
-	for ( i = 0; i < table_len_BGT; i++ )
-	{
-		note_freqs_BGT[i] = ( f * note_ratios_BGT[i][0] ) / note_ratios_BGT[i][1];
-	}
-
+	float f;
+#if GHB_IN_USE()
 	f = INST_SAMPLERATE_GHB / INST_NUM_CELLS_GHB;
 
 	for ( i = 0; i < table_len_GHB; i++ )
@@ -386,6 +461,17 @@ void set_freqs ( )
 		note_freqs_GHB[i] = ( f * note_ratios_GHB[i][0] ) / note_ratios_GHB[i][1];
 	}
 
+#endif
+#if BGT_IN_USE()
+	f = INST_SAMPLERATE_BGT / INST_NUM_CELLS_BGT;
+
+	for ( i = 0; i < table_len_BGT; i++ )
+	{
+		note_freqs_BGT[i] = ( f * note_ratios_BGT[i][0] ) / note_ratios_BGT[i][1];
+	}
+
+#endif
+#if BRD_IN_USE()
 	f = INST_SAMPLERATE_BRD / INST_NUM_CELLS_BRD * 1.14f;
 
 	for ( i = 0; i < table_len_BRD; i++ )
@@ -393,6 +479,8 @@ void set_freqs ( )
 		note_freqs_BRD[i] = ( f * note_ratios_BRD[i][0] ) / note_ratios_BRD[i][1];
 	}
 
+#endif
+#if SML_IN_USE()
 	f = INST_SAMPLERATE_SML / INST_NUM_CELLS_SML * 1.1378882f;
 
 	for ( i = 0; i < table_len_SML; i++ )
@@ -400,12 +488,16 @@ void set_freqs ( )
 		note_freqs_SML[i] = ( f * note_ratios_SML[i][0] ) / note_ratios_SML[i][1];
 	}
 
+#endif
+#if UIL_IN_USE()
 	f = INST_SAMPLERATE_UIL / INST_NUM_CELLS_UIL * 1.1442786f;
 
 	for ( i = 0; i < table_len_UIL; i++ )
 	{
 		note_freqs_UIL[i] = ( f * note_ratios_UIL[i][0] ) / note_ratios_UIL[i][1];
 	}
+
+#endif
 }
 
 
@@ -473,6 +565,8 @@ void updateControl()
 
 	if ( instrument == BGT )
 	{
+#if BGT_IN_USE()
+
 		for ( i = 0; i < table_len_BGT; i++ )
 		{
 			if ( ( fmap ^ finger_table_BGT[i] ) == 0 )
@@ -556,9 +650,13 @@ void updateControl()
 				note_detected = 13;
 			}
 		}
+
+#endif
 	}
 	else if ( instrument == GHB )
 	{
+#if GHB_IN_USE()
+
 		for ( i = 0; i < table_len_GHB; i++ )
 		{
 			if ( ( fmap ^ finger_table_GHB[i] ) == 0 )
@@ -607,9 +705,13 @@ void updateControl()
 				/* LG or no note? */ note_detected = 8;
 			}
 		}
+
+#endif
 	}
 	else if ( instrument == BRD )
 	{
+#if BRD_IN_USE()
+
 		for ( i = 0; i < table_len_BRD; i++ )
 		{
 			if ( ( fmap ^ finger_table_BRD[i] ) == 0 )
@@ -658,9 +760,13 @@ void updateControl()
 				/* LG or no note? */ note_detected = 8;
 			}
 		}
+
+#endif
 	}
 	else if ( instrument == SML )
 	{
+#if SML_IN_USE()
+
 		for ( i = 0; i < table_len_SML; i++ )
 		{
 			if ( ( fmap ^ finger_table_SML[i] ) == 0 )
@@ -709,9 +815,13 @@ void updateControl()
 				/* LG or no note? */ note_detected = 8;
 			}
 		}
+
+#endif
 	}
 	else if ( instrument == UIL )
 	{
+#if UIL_IN_USE()
+
 		for ( i = 0; i < table_len_UIL; i++ )
 		{
 			if ( ( fmap ^ finger_table_UIL[i] ) == 0 )
@@ -760,6 +870,8 @@ void updateControl()
 				/* LG or no note? */ note_detected = 9;
 			}
 		}
+
+#endif
 	}
 
 	if ( note_detected != note_playing )
@@ -768,23 +880,33 @@ void updateControl()
 
 		if ( instrument == GHB )
 		{
+#if GHB_IN_USE()
 			instrumentGHB.setFreq ( note_freqs_GHB[note_playing] );
+#endif
 		}
 		else if ( instrument == BGT )
 		{
+#if BGT_IN_USE()
 			instrumentBGT.setFreq ( note_freqs_BGT[note_playing] );
+#endif
 		}
 		else if ( instrument == BRD )
 		{
+#if BRD_IN_USE()
 			instrumentBRD.setFreq ( note_freqs_BRD[note_playing] );
+#endif
 		}
 		else if ( instrument == SML )
 		{
+#if SML_IN_USE()
 			instrumentSML.setFreq ( note_freqs_SML[note_playing] );
+#endif
 		}
 		else if ( instrument == UIL )
 		{
+#if UIL_IN_USE()
 			instrumentUIL.setFreq ( note_freqs_UIL[note_playing] );
+#endif
 		}
 	}
 
@@ -798,10 +920,12 @@ int audio_out_1, audio_out_2;
 
 void updateAudio()
 {
-#if IS_STM32()
+#if USE_16BIT_SAMPLES
 
 	if ( instrument == GHB )
 	{
+#if GHB_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 9 );
@@ -812,9 +936,13 @@ void updateAudio()
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 9 );
 			audio_out_2 = 0;
 		}
+
+#endif
 	}
 	else if ( instrument == BGT )
 	{
+#if BGT_IN_USE()
+
 		if ( usedrones == DRONE_OFF )
 		{
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 9 );
@@ -823,16 +951,20 @@ void updateAudio()
 		else if ( droneintonation == DRONE_INT_STANDARD )
 		{
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 9 );
-			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 10 );
+			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneBGT.next() * BGT_DRONES_VOLUME ) >> 9 );
 		}
 		else
 		{
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 9 );
 			audio_out_2 = ( int16_t ) ( (  ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 9 );
 		}
+
+#endif
 	}
 	else if ( instrument == BRD )
 	{
+#if BRD_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 9 );
@@ -843,9 +975,13 @@ void updateAudio()
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 9 );
 			audio_out_2 = 0;
 		}
+
+#endif
 	}
 	else if ( instrument == SML )
 	{
+#if SML_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 9 );
@@ -856,9 +992,13 @@ void updateAudio()
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 9 );
 			audio_out_2 = 0;
 		}
+
+#endif
 	}
 	else if ( instrument == UIL )
 	{
+#if UIL_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 9 );
@@ -869,12 +1009,16 @@ void updateAudio()
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 9 );
 			audio_out_2 = 0;
 		}
+
+#endif
 	}
 
 #else
 
 	if ( instrument == GHB )
 	{
+#if GHB_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			audio_out_1 = ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 3;
@@ -885,9 +1029,13 @@ void updateAudio()
 			audio_out_1 = ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 3;
 			audio_out_2 = 0;
 		}
+
+#endif
 	}
 	else if ( instrument == BGT )
 	{
+#if BGT_IN_USE()
+
 		if ( usedrones == DRONE_OFF )
 		{
 			audio_out_1 = ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 3;
@@ -896,16 +1044,20 @@ void updateAudio()
 		else if ( droneintonation == DRONE_INT_STANDARD )
 		{
 			audio_out_1 = ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 3;
-			audio_out_2 = ( ( int16_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 4;
+			audio_out_2 = ( ( int16_t ) droneBGT.next() * BGT_DRONES_VOLUME ) >> 3;
 		}
 		else
 		{
 			audio_out_1 = ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 3;
 			audio_out_2 = ( ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 3;
 		}
+
+#endif
 	}
 	else if ( instrument == BRD )
 	{
+#if BRD_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			audio_out_1 = ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 3;
@@ -916,9 +1068,13 @@ void updateAudio()
 			audio_out_1 = ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 3;
 			audio_out_2 = 0;
 		}
+
+#endif
 	}
 	else if ( instrument == SML )
 	{
+#if SML_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			audio_out_1 = ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 3;
@@ -929,9 +1085,13 @@ void updateAudio()
 			audio_out_1 = ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 3;
 			audio_out_2 = 0;
 		}
+
+#endif
 	}
 	else if ( instrument == UIL )
 	{
+#if UIL_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			audio_out_1 = ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 3;
@@ -942,6 +1102,8 @@ void updateAudio()
 			audio_out_1 = ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 3;
 			audio_out_2 = 0;
 		}
+
+#endif
 	}
 
 #endif
@@ -954,10 +1116,12 @@ int updateAudio()
 	//for STM32 STANDARD and STANDARD PLUS the sample is 11 bits (between -1024 and 1023)
 	//for HIFI, both Arduino and STM32 is 15 bits (between -16384 and 16383)
 #if (AUDIO_MODE == HIFI)
-#if IS_STM32()
+#if USE_16BIT_SAMPLES
 
 	if ( instrument == GHB )
 	{
+#if GHB_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME + ( int32_t ) droneGHB.next() * GHB_DRONES_VOLUME ) >> 6 );
@@ -966,24 +1130,32 @@ int updateAudio()
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 5 );
 		}
+
+#endif
 	}
 	else if ( instrument == BGT )
 	{
+#if BGT_IN_USE()
+
 		if ( usedrones == DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 5 );
 		}
 		else if ( droneintonation == DRONE_INT_STANDARD )
 		{
-			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 7 );
+			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) droneBGT.next() * BGT_DRONES_VOLUME ) >> 6 );
 		}
 		else
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 6 );
 		}
+
+#endif
 	}
 	else if ( instrument == BRD )
 	{
+#if BRD_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME + ( int32_t ) droneBRD.next() * BRD_DRONES_VOLUME ) >> 6 );
@@ -992,9 +1164,13 @@ int updateAudio()
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 5 );
 		}
+
+#endif
 	}
 	else if ( instrument == SML )
 	{
+#if SML_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME + ( int32_t ) droneSML.next() * SML_DRONES_VOLUME ) >> 6 );
@@ -1003,9 +1179,13 @@ int updateAudio()
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 5 );
 		}
+
+#endif
 	}
 	else if ( instrument == UIL )
 	{
+#if UIL_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME + ( int32_t ) droneUIL.next() * UIL_DRONES_VOLUME ) >> 6 );
@@ -1014,12 +1194,16 @@ int updateAudio()
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 5 );
 		}
+
+#endif
 	}
 
 #else
 
 	if ( instrument == GHB )
 	{
+#if GHB_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME + ( int16_t ) droneGHB.next() * GHB_DRONES_VOLUME ) << 2;
@@ -1028,24 +1212,32 @@ int updateAudio()
 		{
 			return ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) << 3;
 		}
+
+#endif
 	}
 	else if ( instrument == BGT )
 	{
+#if BGT_IN_USE()
+
 		if ( usedrones == DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) << 3;
 		}
 		else if ( droneintonation == DRONE_INT_STANDARD )
 		{
-			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) << 1;
+			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) droneBGT.next() * BGT_DRONES_VOLUME ) << 2;
 		}
 		else
 		{
 			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) << 2;
 		}
+
+#endif
 	}
 	else if ( instrument == BRD )
 	{
+#if BRD_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME + ( int16_t ) droneBRD.next() * BRD_DRONES_VOLUME ) << 2;
@@ -1054,9 +1246,13 @@ int updateAudio()
 		{
 			return ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) << 3;
 		}
+
+#endif
 	}
 	else if ( instrument == SML )
 	{
+#if SML_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME + ( int16_t ) droneSML.next() * SML_DRONES_VOLUME ) << 2;
@@ -1065,9 +1261,13 @@ int updateAudio()
 		{
 			return ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) << 3;
 		}
+
+#endif
 	}
 	else if ( instrument == UIL )
 	{
+#if UIL_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME + ( int16_t ) droneUIL.next() * UIL_DRONES_VOLUME ) << 2;
@@ -1076,14 +1276,18 @@ int updateAudio()
 		{
 			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) << 3;
 		}
+
+#endif
 	}
 
 #endif
 #else
-#if IS_STM32()
+#if USE_16BIT_SAMPLES
 
 	if ( instrument == GHB )
 	{
+#if GHB_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME + ( int32_t ) droneGHB.next() * GHB_DRONES_VOLUME ) >> 10 );
@@ -1092,24 +1296,32 @@ int updateAudio()
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 9 );
 		}
+
+#endif
 	}
 	else if ( instrument == BGT )
 	{
+#if BGT_IN_USE()
+
 		if ( usedrones == DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 9 );
 		}
 		else if ( droneintonation == DRONE_INT_STANDARD )
 		{
-			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 11 );
+			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) droneBGT.next() * BGT_DRONES_VOLUME ) >> 10 );
 		}
 		else
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int32_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 10 );
 		}
+
+#endif
 	}
 	else if ( instrument == BRD )
 	{
+#if BRD_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME + ( int32_t ) droneBRD.next() * BRD_DRONES_VOLUME ) >> 10 );
@@ -1118,9 +1330,13 @@ int updateAudio()
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 9 );
 		}
+
+#endif
 	}
 	else if ( instrument == SML )
 	{
+#if SML_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME + ( int32_t ) droneSML.next() * SML_DRONES_VOLUME ) >> 10 );
@@ -1129,9 +1345,13 @@ int updateAudio()
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 9 );
 		}
+
+#endif
 	}
 	else if ( instrument == UIL )
 	{
+#if UIL_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME + ( int32_t ) droneUIL.next() * UIL_DRONES_VOLUME ) >> 10 );
@@ -1140,12 +1360,16 @@ int updateAudio()
 		{
 			return ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 9 );
 		}
+
+#endif
 	}
 
 #else
 
 	if ( instrument == GHB )
 	{
+#if GHB_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME + ( int16_t ) droneGHB.next() * GHB_DRONES_VOLUME ) >> 4;
@@ -1154,24 +1378,32 @@ int updateAudio()
 		{
 			return ( ( int16_t ) instrumentGHB.next() * GHB_CHANTER_VOLUME ) >> 3;
 		}
+
+#endif
 	}
 	else if ( instrument == BGT )
 	{
+#if BGT_IN_USE()
+
 		if ( usedrones == DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME ) >> 3;
 		}
 		else if ( droneintonation == DRONE_INT_STANDARD )
 		{
-			return  ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) droneminBGT.next() * BGT_DRONES_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 5;
+			return  ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) droneBGT.next() * BGT_DRONES_VOLUME ) >> 4;
 		}
 		else
 		{
 			return ( ( int16_t ) instrumentBGT.next() * BGT_CHANTER_VOLUME + ( int16_t ) dronemajBGT.next() * BGT_DRONES_VOLUME ) >> 4;
 		}
+
+#endif
 	}
 	else if ( instrument == BRD )
 	{
+#if BRD_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME + ( int16_t ) droneBRD.next() * BRD_DRONES_VOLUME ) >> 4;
@@ -1180,9 +1412,13 @@ int updateAudio()
 		{
 			return ( ( int16_t ) instrumentBRD.next() * BRD_CHANTER_VOLUME ) >> 3;
 		}
+
+#endif
 	}
 	else if ( instrument == SML )
 	{
+#if SML_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME + ( int16_t ) droneSML.next() * SML_DRONES_VOLUME ) >> 4;
@@ -1191,9 +1427,13 @@ int updateAudio()
 		{
 			return ( ( int16_t ) instrumentSML.next() * SML_CHANTER_VOLUME ) >> 3;
 		}
+
+#endif
 	}
 	else if ( instrument == UIL )
 	{
+#if UIL_IN_USE()
+
 		if ( usedrones != DRONE_OFF )
 		{
 			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME + ( int16_t ) droneUIL.next() * UIL_DRONES_VOLUME ) >> 4;
@@ -1202,6 +1442,8 @@ int updateAudio()
 		{
 			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 3;
 		}
+
+#endif
 	}
 
 #endif

@@ -35,7 +35,7 @@ float note_freqs_GHB[table_len_GHB] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 #define DRONE_NUM_CELLS_GHB 379
 #define INST_SAMPLERATE_GHB 44100
 
-#if IS_STM32()
+#if USE_16BIT_SAMPLES
 
 const int16_t __attribute__ ( ( section ( ".progmem.data" ) ) ) INST_DATA_GHB[] =
 {
