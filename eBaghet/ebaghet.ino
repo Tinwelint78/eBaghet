@@ -150,6 +150,7 @@ void setup()
 	pinMode ( sensor_pins[7], INPUT );
 #elif (TOUCHMODE == TOUCH_MPR121)
 	cap.begin ( 0x5A );
+	delay ( 1000 );
 #endif
 #if (TOUCHMODE == TOUCH_CAP)
 #if defined(FIRST_INSTRUMENT)
@@ -221,28 +222,29 @@ void setup()
 	}
 
 #elif (TOUCHMODE == TOUCH_MPR121)
-	uint16_t currtouched = cap.touched();
 #if defined(FIRST_INSTRUMENT)
 
-	if ( currtouched & _BV ( 0 ) )
+	// use filtered data: the MPR121 take initial value as base value (not true if something is touched when the system starts)
+	// TODO: verify if 128 is good in every conditions
+	if ( cap.filteredData ( 7 ) < 128 )
 	{
 		instrument = FIRST_INSTRUMENT;
 	}
 
 #if defined(SECOND_INSTRUMENT)
-	else if ( currtouched & _BV ( 1 ) )
+	else if ( cap.filteredData ( 6 ) < 128 )
 	{
 		instrument = SECOND_INSTRUMENT;
 	}
 
 #if defined (THIRD_INSTRUMENT)
-	else if ( currtouched & _BV ( 2 ) )
+	else if ( cap.filteredData ( 5 ) < 128 )
 	{
 		instrument = THIRD_INSTRUMENT;
 	}
 
 #if defined (FOURTH_INSTRUMENT)
-	else if ( currtouched & _BV ( 3 ) )
+	else if ( cap.filteredData ( 4 ) < 128 )
 	{
 		instrument = FOURTH_INSTRUMENT;
 	}
@@ -252,7 +254,7 @@ void setup()
 #endif	//defined(SECOND_INSTRUMENT)
 #endif	//defined(FIRST_INSTRUMENT)
 
-	if ( currtouched & _BV ( 4 ) )
+	if ( cap.filteredData ( 3 ) < 128 )
 	{
 		if ( usedrones == DRONE_OFF )
 		{
@@ -266,7 +268,7 @@ void setup()
 
 	if ( instrument == BGT && usedrones == DRONE_ON )
 	{
-		if ( currtouched & _BV ( 5 ) )
+		if ( cap.filteredData ( 2 ) < 128 )
 		{
 			if ( droneintonation == DRONE_INT_A )
 			{
@@ -277,7 +279,7 @@ void setup()
 				droneintonation = DRONE_INT_A;
 			}
 		}
-		else if ( currtouched & _BV ( 6 ) )
+		else if ( cap.filteredData ( 1 ) < 128 )
 		{
 			if ( droneintonation == DRONE_INT_C )
 			{
@@ -531,8 +533,20 @@ void updateControl()
 	}
 
 #elif (TOUCHMODE == TOUCH_MPR121)
-	fmap = cap.touched();
-	fmap &= B11111111;
+	//fmap = cap.touched();
+	//fmap &= B11111111;
+	fmap = 0;
+
+	for ( int i = 0; i < num_sensors; i++ )
+	{
+		// use filtered data: the MPR121 take initial value as base value (not true if something is touched when the system starts)
+		// TODO: verify if 128 is good in every conditions
+		if ( cap.filteredData ( i ) < 128 )
+		{
+			fmap |= ( 1 << i );
+		}
+	}
+
 #else
 	// pushbuttonetc, finger sensors
 	fmap = PIND >> 2;  // get rid of lowest 2 bytes,  fill top 2 bytes

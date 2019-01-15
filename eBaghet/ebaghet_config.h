@@ -107,7 +107,7 @@
 #define TOUCH_MPR121	2
 // NOTE: for MP121 to work with Arduino, twi_nonblock.h and twi_nonblock.cpp must be deleted from Mozzi library!
 // NOTE: TOUCH_CAP is not working with STM32
-#define TOUCHMODE TOUCH_CAP
+#define TOUCHMODE TOUCH_MPR121
 #define CAPTOUCH_TRIGGER 3
 
 // relative volumes 1-8
