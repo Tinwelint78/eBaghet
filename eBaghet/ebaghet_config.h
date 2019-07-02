@@ -136,6 +136,9 @@ int sensor_pins[] = { 12, 8, 7, 6, 5, 4, 3, 2 };
 #endif
 
 
-
+#define MPR121_ADDRESS	0x5A
+//#define MPR121_ADDRESS	0x5B
+//#define MPR121_ADDRESS	0x5C
+//#define MPR121_ADDRESS	0x5D
 
 #endif /* EBAGHET_CONFIG_H_ */

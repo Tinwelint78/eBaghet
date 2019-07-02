@@ -40,6 +40,9 @@ int note_ratios_BGT[table_len_BGT][2] =
 	{ 5, 6 }    /* F#	370 Hz  373 Hz  (363 Hz)*/
 };
 
+// starting note is D
+#define BGT_STARTING_NOTE	5
+
 float note_freqs_BGT[table_len_BGT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 /* Baghet sounds, courtesy of Valter Biella              */

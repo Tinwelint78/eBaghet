@@ -30,6 +30,9 @@ int note_ratios_BRD[table_len_BRD][2] =
 
 float note_freqs_BRD[table_len_BRD] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
+// starting note is E
+#define BRD_STARTING_NOTE	3
+
 #define INST_NUM_CELLS_BRD 114
 #define DRONE_NUM_CELLS_BRD 400
 #define INST_SAMPLERATE_BRD 44100

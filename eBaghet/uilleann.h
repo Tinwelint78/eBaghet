@@ -36,6 +36,9 @@ float note_freqs_UIL[table_len_UIL] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 #define DRONE_NUM_CELLS_UIL 804
 #define INST_SAMPLERATE_UIL 44100
 
+// starting note is A
+#define UIL_STARTING_NOTE	4
+
 #if USE_16BIT_SAMPLES
 
 const int16_t __attribute__ ( ( section ( ".progmem.data" ) ) ) INST_DATA_UIL[] =

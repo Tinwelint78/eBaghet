@@ -34,6 +34,9 @@ float note_freqs_SML[table_len_SML] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 #define DRONE_NUM_CELLS_SML 805
 #define INST_SAMPLERATE_SML 44100
 
+// starting note is E
+#define SML_STARTING_NOTE	3
+
 #if USE_16BIT_SAMPLES
 
 const int16_t __attribute__ ( ( section ( ".progmem.data" ) ) ) INST_DATA_SML[] =
