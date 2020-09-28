@@ -50,6 +50,12 @@
 #if UIL_IN_USE()
 #include "uilleann.h"
 #endif
+#if GAL_IN_USE()
+#include "gallega.h"
+#endif
+#if AST_IN_USE()
+#include "asturiana.h"
+#endif
 
 #if (TOUCHMODE == TOUCH_MPR121)
 #if IS_STM32()
@@ -87,6 +93,14 @@ Sample16 <DRONE_NUM_CELLS_SML, AUDIO_RATE>droneSML ( DRONE_DATA_SML );
 Sample16 <INST_NUM_CELLS_UIL, AUDIO_RATE>instrumentUIL ( INST_DATA_UIL );
 Sample16 <DRONE_NUM_CELLS_UIL, AUDIO_RATE>droneUIL ( DRONE_DATA_UIL );
 #endif
+#if GAL_IN_USE()
+Sample16 <INST_NUM_CELLS_GAL, AUDIO_RATE>instrumentGAL ( INST_DATA_GAL );
+Sample16 <DRONE_NUM_CELLS_GAL, AUDIO_RATE>droneGAL ( DRONE_DATA_GAL );
+#endif
+#if AST_IN_USE()
+Sample16 <INST_NUM_CELLS_AST, AUDIO_RATE>instrumentAST ( INST_DATA_AST );
+Sample16 <DRONE_NUM_CELLS_AST, AUDIO_RATE>droneAST ( DRONE_DATA_AST );
+#endif
 #else
 #if GHB_IN_USE()
 Sample <INST_NUM_CELLS_GHB, AUDIO_RATE>instrumentGHB ( INST_DATA_GHB );
@@ -110,6 +124,14 @@ Sample <DRONE_NUM_CELLS_SML, AUDIO_RATE>droneSML ( DRONE_DATA_SML );
 #if UIL_IN_USE()
 Sample <INST_NUM_CELLS_UIL, AUDIO_RATE>instrumentUIL ( INST_DATA_UIL );
 Sample <DRONE_NUM_CELLS_UIL, AUDIO_RATE>droneUIL ( DRONE_DATA_UIL );
+#endif
+#if GAL_IN_USE()
+Sample <INST_NUM_CELLS_GAL, AUDIO_RATE>instrumentGAL ( INST_DATA_GAL );
+Sample <DRONE_NUM_CELLS_GAL, AUDIO_RATE>droneGAL ( DRONE_DATA_GAL );
+#endif
+#if AST_IN_USE()
+Sample <INST_NUM_CELLS_AST, AUDIO_RATE>instrumentAST ( INST_DATA_AST );
+Sample <DRONE_NUM_CELLS_AST, AUDIO_RATE>droneAST ( DRONE_DATA_AST );
 #endif
 #endif
 
@@ -465,6 +487,34 @@ void setup()
 
 #endif
 	}
+	else if ( instrument == GAL )
+	{
+#if GAL_IN_USE()
+		instrumentGAL.setLoopingOn();
+		instrumentGAL.setFreq ( note_freqs_GAL[0] ); // set the frequency
+
+		if ( usedrones != DRONE_OFF )
+		{
+			droneGAL.setLoopingOn();
+			droneGAL.setFreq ( ( float ) INST_SAMPLERATE_GAL / DRONE_NUM_CELLS_GAL ); // set the frequency
+		}
+
+#endif
+	}
+	else if ( instrument == AST )
+	{
+#if AST_IN_USE()
+		instrumentAST.setLoopingOn();
+		instrumentAST.setFreq ( note_freqs_AST[0] ); // set the frequency
+
+		if ( usedrones != DRONE_OFF )
+		{
+			droneAST.setLoopingOn();
+			droneAST.setFreq ( ( float ) INST_SAMPLERATE_AST / DRONE_NUM_CELLS_AST ); // set the frequency
+		}
+
+#endif
+	}
 }
 
 void set_freqs ( )
@@ -516,9 +566,25 @@ void set_freqs ( )
 	}
 
 #endif
+#if GAL_IN_USE()
+	f = INST_SAMPLERATE_GAL / INST_NUM_CELLS_GAL;
+
+	for ( i = 0; i < table_len_GAL; i++ )
+	{
+		note_freqs_GAL[i] = ( f * note_ratios_GAL[i][0] ) / note_ratios_GAL[i][1];
+	}
+
+#endif
+#if AST_IN_USE()
+	f = INST_SAMPLERATE_AST / INST_NUM_CELLS_AST;
+
+	for ( i = 0; i < table_len_AST; i++ )
+	{
+		note_freqs_AST[i] = ( f * note_ratios_AST[i][0] ) / note_ratios_AST[i][1];
+	}
+
+#endif
 }
-
-
 void updateControl()
 {
 	byte fb = 0;
@@ -599,85 +665,9 @@ void updateControl()
 
 		for ( i = 0; i < table_len_BGT; i++ )
 		{
-			if ( ( fmap ^ finger_table_BGT[i] ) == 0 )
+			if ( ( ( fmap ^ finger_table_BGT[i][0] ) & finger_table_BGT[i][1] ) == 0 )
 			{
 				note_detected = i;
-			}
-		}
-
-		// gracenotes
-		if ( note_detected == -1 )
-		{
-			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
-			{
-				note_detected = 0;
-			}
-			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
-			{
-				if ( ( ( fmap >> 5 ) & 1 ) == 0 )
-				{
-					note_detected = 1;
-				}
-				else
-				{
-					note_detected = 2;
-				}
-			}
-			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
-			{
-				if ( ( ( fmap >> 4 ) & 1 ) == 0 )
-				{
-					note_detected = 3;
-				}
-				else
-				{
-					note_detected = 4;
-				}
-			}
-			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
-			{
-				if ( ( ( fmap >> 3 ) & 1 ) == 0 )
-				{
-					note_detected = 5;
-				}
-				else
-				{
-					note_detected = 6;
-				}
-			}
-			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
-			{
-				note_detected = 7;
-			}
-			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
-			{
-				if ( ( ( fmap >> 1 ) & 1 ) == 0 )
-				{
-					note_detected = 8;
-				}
-				else
-				{
-					note_detected = 9;
-				}
-			}
-			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
-			{
-				if ( ( ( fmap >> 0 ) & 1 ) == 0 )
-				{
-					note_detected = 10;
-				}
-				else
-				{
-					note_detected = 11;
-				}
-			}
-			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
-			{
-				note_detected = 12;
-			}
-			else
-			{
-				note_detected = 13;
 			}
 		}
 
@@ -698,50 +688,9 @@ void updateControl()
 
 		for ( i = 0; i < table_len_GHB; i++ )
 		{
-			if ( ( fmap ^ finger_table_GHB[i] ) == 0 )
+			if (((fmap ^ finger_table_GHB[i][0]) & finger_table_GHB[i][1]) == 0)
 			{
 				note_detected = i;
-			}
-		}
-
-		// gracenotes
-		if ( note_detected == -1 )
-		{
-			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
-			{
-				note_detected = 0;
-			}
-			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
-			{
-				note_detected = 1;
-			}
-			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
-			{
-				note_detected = 2;
-			}
-			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
-			{
-				note_detected = 3;
-			}
-			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
-			{
-				note_detected = 4;
-			}
-			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
-			{
-				note_detected = 5;
-			}
-			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
-			{
-				note_detected = 6;
-			}
-			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
-			{
-				note_detected = 7;
-			}
-			else
-			{
-				/* LG or no note? */ note_detected = 8;
 			}
 		}
 
@@ -762,50 +711,9 @@ void updateControl()
 
 		for ( i = 0; i < table_len_BRD; i++ )
 		{
-			if ( ( fmap ^ finger_table_BRD[i] ) == 0 )
+			if (((fmap ^ finger_table_BRD[i][0]) & finger_table_BRD[i][1]) == 0)
 			{
 				note_detected = i;
-			}
-		}
-
-		// gracenotes
-		if ( note_detected == -1 )
-		{
-			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
-			{
-				note_detected = 0;
-			}
-			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
-			{
-				note_detected = 1;
-			}
-			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
-			{
-				note_detected = 2;
-			}
-			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
-			{
-				note_detected = 3;
-			}
-			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
-			{
-				note_detected = 4;
-			}
-			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
-			{
-				note_detected = 5;
-			}
-			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
-			{
-				note_detected = 6;
-			}
-			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
-			{
-				note_detected = 7;
-			}
-			else
-			{
-				/* LG or no note? */ note_detected = 8;
 			}
 		}
 
@@ -826,50 +734,9 @@ void updateControl()
 
 		for ( i = 0; i < table_len_SML; i++ )
 		{
-			if ( ( fmap ^ finger_table_SML[i] ) == 0 )
+			if (((fmap ^ finger_table_SML[i][0]) & finger_table_SML[i][1]) == 0)
 			{
 				note_detected = i;
-			}
-		}
-
-		// gracenotes
-		if ( note_detected == -1 )
-		{
-			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
-			{
-				note_detected = 0;
-			}
-			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
-			{
-				note_detected = 1;
-			}
-			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
-			{
-				note_detected = 2;
-			}
-			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
-			{
-				note_detected = 3;
-			}
-			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
-			{
-				note_detected = 4;
-			}
-			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
-			{
-				note_detected = 5;
-			}
-			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
-			{
-				note_detected = 6;
-			}
-			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
-			{
-				note_detected = 7;
-			}
-			else
-			{
-				/* LG or no note? */ note_detected = 8;
 			}
 		}
 
@@ -890,50 +757,9 @@ void updateControl()
 
 		for ( i = 0; i < table_len_UIL; i++ )
 		{
-			if ( ( fmap ^ finger_table_UIL[i] ) == 0 )
+			if (((fmap ^ finger_table_UIL[i][0]) & finger_table_UIL[i][1]) == 0)
 			{
 				note_detected = i;
-			}
-		}
-
-		// gracenotes
-		if ( note_detected == -1 )
-		{
-			if ( ( ( fmap >> 7 ) & 1 ) == 0 )
-			{
-				note_detected = 0;
-			}
-			else if ( ( ( fmap >> 6 ) & 1 ) == 0 )
-			{
-				note_detected = 1;
-			}
-			else if ( ( ( fmap >> 5 ) & 1 ) == 0 )
-			{
-				note_detected = 3;
-			}
-			else if ( ( ( fmap >> 4 ) & 1 ) == 0 )
-			{
-				note_detected = 4;
-			}
-			else if ( ( ( fmap >> 3 ) & 1 ) == 0 )
-			{
-				note_detected = 5;
-			}
-			else if ( ( ( fmap >> 2 ) & 1 ) == 0 )
-			{
-				note_detected = 6;
-			}
-			else if ( ( ( fmap >> 1 ) & 1 ) == 0 )
-			{
-				note_detected = 7;
-			}
-			else if ( ( ( fmap >> 0 ) & 1 ) == 0 )
-			{
-				note_detected = 8;
-			}
-			else
-			{
-				/* LG or no note? */ note_detected = 9;
 			}
 		}
 
@@ -941,6 +767,52 @@ void updateControl()
 		if ( startchanter == 0 )
 		{
 			if ( note_detected == UIL_STARTING_NOTE )
+			{
+				startchanter = 1;
+			}
+		}
+
+#endif
+	}
+	else if ( instrument == GAL )
+	{
+#if GAL_IN_USE()
+
+		for ( i = 0; i < table_len_GAL; i++ )
+		{
+			if (((fmap ^ finger_table_GAL[i][0]) & finger_table_GAL[i][1]) == 0)
+			{
+				note_detected = i;
+			}
+		}
+
+		// detect starting note
+		if ( startchanter == 0 )
+		{
+			if ( note_detected == GAL_STARTING_NOTE )
+			{
+				startchanter = 1;
+			}
+		}
+
+#endif
+	}
+	else if ( instrument == AST )
+	{
+#if AST_IN_USE()
+
+		for ( i = 0; i < table_len_AST; i++ )
+		{
+			if (((fmap ^ finger_table_AST[i][0]) & finger_table_AST[i][1]) == 0)
+			{
+				note_detected = i;
+			}
+		}
+
+		// detect starting note
+		if ( startchanter == 0 )
+		{
+			if ( note_detected == AST_STARTING_NOTE )
 			{
 				startchanter = 1;
 			}
@@ -957,10 +829,7 @@ void updateControl()
 		{
 #if GHB_IN_USE()
 			instrumentGHB.setFreq ( note_freqs_GHB[note_playing] );
-			//instrumentGHB.setStart ( note_starts_GHB[note_playing] );
-			//instrumentGHB.setEnd ( note_stops_GHB[note_playing] );
-			//instrumentGHB.start();
-			//instrumentGHB.setFreq ( ( float ) INST_SAMPLERATE_GHB / INST_NUM_CELLS_GHB );
+
 #endif
 		}
 		else if ( instrument == BGT )
@@ -987,16 +856,26 @@ void updateControl()
 			instrumentUIL.setFreq ( note_freqs_UIL[note_playing] );
 #endif
 		}
+		else if ( instrument == GAL )
+		{
+#if GAL_IN_USE()
+			instrumentGAL.setFreq ( note_freqs_GAL[note_playing] );
+#endif
+		}
+		else if ( instrument == AST )
+		{
+#if AST_IN_USE()
+			instrumentAST.setFreq ( note_freqs_AST[note_playing] );
+#endif
+		}
 	}
 
 	// reset fingermap
 	fmap = 0;
 }
-
 #if (STEREO_HACK == true)
 // needed for stereo output
 int audio_out_1, audio_out_2;
-
 void updateAudio()
 {
 #if USE_16BIT_SAMPLES
@@ -1134,6 +1013,56 @@ void updateAudio()
 		else
 		{
 			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = 0;
+		}
+
+#endif
+	}
+	else if ( instrument == GAL )
+	{
+#if GAL_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME ) >> 9 );
+			}
+			else
+			{
+				audio_out_1 = 0;
+			}
+
+			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneGAL.next() * GAL_DRONES_VOLUME ) >> 9 );
+		}
+		else
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME ) >> 9 );
+			audio_out_2 = 0;
+		}
+
+#endif
+	}
+	else if ( instrument == AST )
+	{
+#if AST_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentAST.next() * AST_CHANTER_VOLUME ) >> 9 );
+			}
+			else
+			{
+				audio_out_1 = 0;
+			}
+
+			audio_out_2 = ( int16_t ) ( ( ( int32_t ) droneAST.next() * AST_DRONES_VOLUME ) >> 9 );
+		}
+		else
+		{
+			audio_out_1 = ( int16_t ) ( ( ( int32_t ) instrumentAST.next() * AST_CHANTER_VOLUME ) >> 9 );
 			audio_out_2 = 0;
 		}
 
@@ -1280,10 +1209,59 @@ void updateAudio()
 
 #endif
 	}
+	else if ( instrument == GAL )
+	{
+#if GAL_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				audio_out_1 = ( ( int16_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME ) >> 3;
+			}
+			else
+			{
+				audio_out_1 = 0;
+			}
+
+			audio_out_2 = ( ( int16_t ) droneGAL.next() * GAL_DRONES_VOLUME ) >> 3;
+		}
+		else
+		{
+			audio_out_1 = ( ( int16_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = 0;
+		}
+
+#endif
+	}
+	else if ( instrument == AST )
+	{
+#if AST_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				audio_out_1 = ( ( int16_t ) instrumentAST.next() * AST_CHANTER_VOLUME ) >> 3;
+			}
+			else
+			{
+				audio_out_1 = 0;
+			}
+
+			audio_out_2 = ( ( int16_t ) droneAST.next() * AST_DRONES_VOLUME ) >> 3;
+		}
+		else
+		{
+			audio_out_1 = ( ( int16_t ) instrumentAST.next() * AST_CHANTER_VOLUME ) >> 3;
+			audio_out_2 = 0;
+		}
+
+#endif
+	}
 
 #endif
 }
-
 #else
 int updateAudio()
 {
@@ -1414,6 +1392,50 @@ int updateAudio()
 
 #endif
 	}
+	else if ( instrument == GAL )
+	{
+#if GAL_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				return ( int16_t ) ( ( ( int32_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME + ( int32_t ) droneGAL.next() * GAL_DRONES_VOLUME ) >> 6 );
+			}
+			else
+			{
+				return ( int16_t ) ( ( ( int32_t ) droneGAL.next() * GAL_DRONES_VOLUME ) >> 6 );
+			}
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME ) >> 5 );
+		}
+
+#endif
+	}
+	else if ( instrument == AST )
+	{
+#if AST_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				return ( int16_t ) ( ( ( int32_t ) instrumentAST.next() * AST_CHANTER_VOLUME + ( int32_t ) droneAST.next() * AST_DRONES_VOLUME ) >> 6 );
+			}
+			else
+			{
+				return ( int16_t ) ( ( ( int32_t ) droneAST.next() * AST_DRONES_VOLUME ) >> 6 );
+			}
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentAST.next() * AST_CHANTER_VOLUME ) >> 5 );
+		}
+
+#endif
+	}
 
 #else
 
@@ -1534,6 +1556,50 @@ int updateAudio()
 		else
 		{
 			return ( ( int16_t ) instrumentUIL.next() * UIL_CHANTER_VOLUME ) << 3;
+		}
+
+#endif
+	}
+	else if ( instrument == GAL )
+	{
+#if GAL_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				return ( ( int16_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME + ( int16_t ) droneGAL.next() * GAL_DRONES_VOLUME ) << 2;
+			}
+			else
+			{
+				return ( ( int16_t ) droneGAL.next() * GAL_DRONES_VOLUME ) << 2;
+			}
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME ) << 3;
+		}
+
+#endif
+	}
+	else if ( instrument == AST )
+	{
+#if AST_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				return ( ( int16_t ) instrumentAST.next() * AST_CHANTER_VOLUME + ( int16_t ) droneAST.next() * AST_DRONES_VOLUME ) << 2;
+			}
+			else
+			{
+				return ( ( int16_t ) droneAST.next() * AST_DRONES_VOLUME ) << 2;
+			}
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentAST.next() * AST_CHANTER_VOLUME ) << 3;
 		}
 
 #endif
@@ -1664,6 +1730,50 @@ int updateAudio()
 
 #endif
 	}
+	else if ( instrument == GAL )
+	{
+#if GAL_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				return ( int16_t ) ( ( ( int32_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME + ( int32_t ) droneGAL.next() * GAL_DRONES_VOLUME ) >> 10 );
+			}
+			else
+			{
+				return ( int16_t ) ( ( ( int32_t ) droneGAL.next() * GAL_DRONES_VOLUME ) >> 10 );
+			}
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME ) >> 9 );
+		}
+
+#endif
+	}
+	else if ( instrument == AST )
+	{
+#if AST_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				return ( int16_t ) ( ( ( int32_t ) instrumentAST.next() * AST_CHANTER_VOLUME + ( int32_t ) droneAST.next() * AST_DRONES_VOLUME ) >> 10 );
+			}
+			else
+			{
+				return ( int16_t ) ( ( ( int32_t ) droneAST.next() * AST_DRONES_VOLUME ) >> 10 );
+			}
+		}
+		else
+		{
+			return ( int16_t ) ( ( ( int32_t ) instrumentAST.next() * AST_CHANTER_VOLUME ) >> 9 );
+		}
+
+#endif
+	}
 
 #else
 
@@ -1781,19 +1891,60 @@ int updateAudio()
 
 #endif
 	}
+	else if ( instrument == GAL )
+	{
+#if GAL_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				return ( ( int16_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME + ( int16_t ) droneGAL.next() * GAL_DRONES_VOLUME ) >> 4;
+			}
+			else
+			{
+				return ( ( int16_t ) droneGAL.next() * GAL_DRONES_VOLUME ) >> 4;
+			}
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentGAL.next() * GAL_CHANTER_VOLUME ) >> 3;
+		}
+
+#endif
+	}
+	else if ( instrument == AST )
+	{
+#if AST_IN_USE()
+
+		if ( usedrones != DRONE_OFF )
+		{
+			if ( startchanter != 0 )
+			{
+				return ( ( int16_t ) instrumentAST.next() * AST_CHANTER_VOLUME + ( int16_t ) droneAST.next() * AST_DRONES_VOLUME ) >> 4;
+			}
+			else
+			{
+				return ( ( int16_t ) droneAST.next() * AST_DRONES_VOLUME ) >> 4;
+			}
+		}
+		else
+		{
+			return ( ( int16_t ) instrumentAST.next() * AST_CHANTER_VOLUME ) >> 3;
+		}
+
+#endif
+	}
 
 #endif
 #endif
 }
 #endif
-
 void loop()
 {
 	audioHook(); // required here
 }
-
 #if (TOUCHMODE == TOUCH_CAP)
-
 // captouch code from eChanter, unrolled to be faster and more reliable, courtesy of
 //  Danial Martinez, GPL v2
 //  https://github.com/danielmartinez/eClarin
@@ -1968,6 +2119,4 @@ exit:
 #endif
 	return cycles;
 }
-
 #endif
-

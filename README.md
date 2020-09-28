@@ -1,6 +1,6 @@
 # eBaghet
 
-Open source electronic pipes project for Arduino. Currently include Baghet (italian bagpipes), Great Highland Bagpipes, Small Pipes, Border Pipes and Uillean Pipes (still in developement).
+Open source electronic pipes project for Arduino. Currently include Baghet (italian bagpipes), Great Highland Bagpipes, Small Pipes, Border Pipes, Uillean Pipes, Gaita Gallega and Gaita Asturiana (still in developement).
 
 Largely based on eChanter by Tim Malcolm 2010-2015 CC by-nc-sa. ([echanter site](http://www.echanter.com/), [sourceforge repository](https://sourceforge.net/projects/echanter/))
 
@@ -65,7 +65,7 @@ You can define order with which instruments are presented:
 	  #define THIRD_INSTRUMENT	SML
 	  #define FOURTH_INSTRUMENT	UIL
 
-GHB is Great Highland Bagpipes, BGT is Baghet, BRD is border pipes, SML is small pipes, UIL is Uilleann pipes.
+GHB is Great Highland Bagpipes, BGT is Baghet, BRD is border pipes, SML is small pipes, UIL is Uilleann pipes, GAL is Gaita gallega, AST is Gaita asturiana.
 
 You can define if by default the chanter starts with a drone sound:
 	
@@ -111,6 +111,12 @@ You can also decide relative volumes for drones and chanter for all instruments,
       
 	  #define UIL_CHANTER_VOLUME	8
 	  #define UIL_DRONES_VOLUME	8
+
+	  #define GAL_CHANTER_VOLUME	8
+	  #define GAL_DRONES_VOLUME	8
+	  
+	  #define AST_CHANTER_VOLUME	8
+	  #define AST_DRONES_VOLUME	8
 
 You can change the numbers to any value between 1 and 8 (1 is minimum volume, 8 is maximum volume).
 
