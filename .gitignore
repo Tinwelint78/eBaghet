@@ -295,7 +295,6 @@ __pycache__/
 *.dll
 /*.layout
 /.cccc
-*.txt
 *.user
 *.make
 *.bak
@@ -310,7 +309,6 @@ __pycache__/
 *.scc
 *.db
 *.qbs*
-*build*
 *__vm*
 
 #ignore vs project too

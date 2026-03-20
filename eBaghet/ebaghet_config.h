@@ -147,7 +147,7 @@
 #define START_CHANTER_AFTERWARDS	false
 
 int num_sensors = 8;
-#if IS_STM32()
+#if IS_STM32MAPLE() || IS_STM32DUINO()
 int sensor_pins[] = {PA7, PA6, PA5, PA4, PA3, PA2, PA1, PA0};
 #else
 int sensor_pins[] = { 12, 8, 7, 6, 5, 4, 3, 2 };

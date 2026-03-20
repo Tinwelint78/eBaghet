@@ -26,7 +26,27 @@
 
 */
 
-#include <MozziGuts.h>
+#include <MozziConfigValues.h>
+
+// Prima migrazione: teniamo compatibilità alta con sketch vecchio
+#define MOZZI_COMPATIBILITY_LEVEL MOZZI_COMPATIBILITY_1_1
+
+// Vecchio CONTROL_RATE = 256
+#define MOZZI_CONTROL_RATE 256
+#define MOZZI_AUDIO_RATE 32768
+
+// Vecchio HIFI -> nuovo nome
+#if defined(__IMXRT1062__)   // Teensy 4.x
+#define MOZZI_AUDIO_MODE MOZZI_OUTPUT_PWM
+#else
+#define MOZZI_AUDIO_MODE MOZZI_OUTPUT_2PIN_PWM
+#endif
+#define MOZZI_AUDIO_CHANNELS MOZZI_MONO
+
+#define MOZZI_AUDIO_BITS_PER_CHANNEL 7   // workaround bug stm32maple
+
+
+#include <Mozzi.h>
 #include "ebaghet_config.h"
 #if USE_16BIT_SAMPLES
 #include "Sample16.h" // Sample template
@@ -58,7 +78,7 @@
 #endif
 
 #if (TOUCHMODE == TOUCH_MPR121)
-#if IS_STM32()
+#if IS_STM32MAPLE() || IS_STM32DUINO()
 #include <SoftWire.h>
 #include <Adafruit_MPR121_STM32.h>
 #else
@@ -67,8 +87,6 @@
 #endif
 #endif
 #include <tables/sin512_int8.h>
-
-#define CONTROL_RATE 256 //512 // 64 // powers of 2 please
 
 #if USE_16BIT_SAMPLES
 #if GHB_IN_USE()
@@ -148,7 +166,7 @@ byte droneintonation = STARTING_DRONE_INT;
 byte startchanter = 0;
 
 #if (TOUCHMODE == TOUCH_MPR121)
-#if IS_STM32()
+#if IS_STM32MAPLE() || IS_STM32DUINO()
 Adafruit_MPR121_STM32 cap = Adafruit_MPR121_STM32();
 #else
 Adafruit_MPR121 cap = Adafruit_MPR121();
@@ -688,7 +706,7 @@ void updateControl()
 
 		for ( i = 0; i < table_len_GHB; i++ )
 		{
-			if (((fmap ^ finger_table_GHB[i][0]) & finger_table_GHB[i][1]) == 0)
+			if ( ( ( fmap ^ finger_table_GHB[i][0] ) & finger_table_GHB[i][1] ) == 0 )
 			{
 				note_detected = i;
 			}
@@ -711,7 +729,7 @@ void updateControl()
 
 		for ( i = 0; i < table_len_BRD; i++ )
 		{
-			if (((fmap ^ finger_table_BRD[i][0]) & finger_table_BRD[i][1]) == 0)
+			if ( ( ( fmap ^ finger_table_BRD[i][0] ) & finger_table_BRD[i][1] ) == 0 )
 			{
 				note_detected = i;
 			}
@@ -734,7 +752,7 @@ void updateControl()
 
 		for ( i = 0; i < table_len_SML; i++ )
 		{
-			if (((fmap ^ finger_table_SML[i][0]) & finger_table_SML[i][1]) == 0)
+			if ( ( ( fmap ^ finger_table_SML[i][0] ) & finger_table_SML[i][1] ) == 0 )
 			{
 				note_detected = i;
 			}
@@ -757,7 +775,7 @@ void updateControl()
 
 		for ( i = 0; i < table_len_UIL; i++ )
 		{
-			if (((fmap ^ finger_table_UIL[i][0]) & finger_table_UIL[i][1]) == 0)
+			if ( ( ( fmap ^ finger_table_UIL[i][0] ) & finger_table_UIL[i][1] ) == 0 )
 			{
 				note_detected = i;
 			}
@@ -780,7 +798,7 @@ void updateControl()
 
 		for ( i = 0; i < table_len_GAL; i++ )
 		{
-			if (((fmap ^ finger_table_GAL[i][0]) & finger_table_GAL[i][1]) == 0)
+			if ( ( ( fmap ^ finger_table_GAL[i][0] ) & finger_table_GAL[i][1] ) == 0 )
 			{
 				note_detected = i;
 			}
@@ -803,7 +821,7 @@ void updateControl()
 
 		for ( i = 0; i < table_len_AST; i++ )
 		{
-			if (((fmap ^ finger_table_AST[i][0]) & finger_table_AST[i][1]) == 0)
+			if ( ( ( fmap ^ finger_table_AST[i][0] ) & finger_table_AST[i][1] ) == 0 )
 			{
 				note_detected = i;
 			}
@@ -829,7 +847,6 @@ void updateControl()
 		{
 #if GHB_IN_USE()
 			instrumentGHB.setFreq ( note_freqs_GHB[note_playing] );
-
 #endif
 		}
 		else if ( instrument == BGT )
@@ -1952,7 +1969,7 @@ void loop()
 uint8_t readCapacitivePin ( int pinToMeasure )
 {
 	// Variables used to translate from Arduino to AVR pin naming
-#if IS_STM32()
+#if IS_STM32MAPLE() || IS_STM32DUINO()
 	volatile uint32_t *port;
 	volatile uint32_t *pin;
 #else
@@ -1965,21 +1982,21 @@ uint8_t readCapacitivePin ( int pinToMeasure )
 	//  and which bit of those registers we care about.
 	byte bitmask;
 	port = portOutputRegister ( digitalPinToPort ( pinToMeasure ) );
-#if not IS_STM32()
+#if !(IS_STM32MAPLE() || IS_STM32DUINO())
 	ddr = portModeRegister ( digitalPinToPort ( pinToMeasure ) );
 #endif
 	bitmask = digitalPinToBitMask ( pinToMeasure );
 	pin = portInputRegister ( digitalPinToPort ( pinToMeasure ) );
 	// Discharge the pin first by setting it low and output
 	*port &= ~ ( bitmask );
-#if IS_STM32()
+#if IS_STM32MAPLE() || IS_STM32DUINO()
 	pinMode ( pinToMeasure, OUTPUT );
 #else
 	*ddr  |= bitmask;
 #endif
 	// delay(1);
 	// Make the pin an input with the internal pull-up on
-#if IS_STM32()
+#if IS_STM32MAPLE() || IS_STM32DUINO()
 	pinMode ( pinToMeasure, INPUT_PULLUP );
 #else
 	*ddr &= ~ ( bitmask );
@@ -2112,7 +2129,7 @@ exit:
 	//  two sensors, your body will transfer the charge between
 	//  sensors.
 	*port &= ~ ( bitmask );
-#if IS_STM32()
+#if IS_STM32MAPLE() || IS_STM32DUINO()
 	pinMode ( pinToMeasure, OUTPUT );
 #else
 	*ddr  |= bitmask;
