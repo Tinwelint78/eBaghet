@@ -15,7 +15,7 @@ This example build uses:
 - a compact headphone jack sub-assembly
 - a single-cell battery holder with a 5 V boost converter
 - a power switch
-- a pressure sensor board at the opposite end of the tube
+- end caps or housings for the top and bottom ends
 
 > Safety note  
 > Drilling, cutting, soldering, batteries and boost converters can all cause damage or injury if handled badly. Build and use this project entirely at your own risk.
@@ -45,7 +45,6 @@ Suggested parts for a simple build like this:
 - 1 power switch
 - 1 single-cell battery holder
 - 1 boost converter to 5 V
-- 1 pressure sensor board or module
 - end caps or housings for the top and bottom ends
 
 Useful tools:
@@ -115,7 +114,42 @@ For a first build, a plain straight body is usually better than trying to imitat
 
 ---
 
-## 5. Finger sensors
+## 5. Power system
+
+This build uses a single-cell battery holder feeding a small boost converter, then a switch, then the Nano.
+
+A simple order is:
+
+1. connect the battery holder to the boost converter input
+2. connect the boost converter output to the switch and board power lines
+3. verify a stable 5 V output before connecting the Arduino
+4. mount the battery holder, boost converter and switch in one end section
+
+### Battery holder and boost converter
+
+![Battery holder and boost converter](04-battery-and-boost-converter.jpg)
+
+### Routing the boost converter and switch
+
+This photo shows the **boost converter** and the **power switch** being routed into the body. It is not a pressure sensor assembly.
+
+![Boost converter and switch wiring being routed into the body](05-pressure-sensor-and-switch-routing.jpg)
+
+### Fitting the boost converter, switch and battery holder
+
+This photo shows the mechanical fitting of the **boost converter**, **switch** and **battery holder** in the end section.
+
+![Boost converter, switch and battery holder fitted in the end section](06-pressure-sensor-mounted.jpg)
+
+### Good habits
+
+- check polarity every time before powering up
+- insulate exposed solder joints
+- do not force the battery holder into the tube if it stresses the wires
+
+---
+
+## 6. Finger sensors
 
 The archived eChanter guide described several sensor styles, including screw-and-wire contacts, brass contacts and other simple DIY direct-touch methods.
 
@@ -168,7 +202,7 @@ Check the current `eBaghet_config.h` before soldering permanently, especially if
 
 ---
 
-## 6. Audio output
+## 7. Audio output
 
 The archived eChanter guide originally used a simple Arduino headphone output and, for the old Mozzi setup, strongly preferred the old two-pin **HIFI** mode on pins 9 and 10.
 
@@ -188,6 +222,46 @@ This Nano build uses a compact headphone jack sub-assembly with passive parts so
 
 ![Arduino Nano with compact audio jack sub-assembly](13-nano-audio-subassembly.jpg)
 
+### Output variants
+
+For classic Arduino Nano / ATmega328P style builds, there are two simple analog output variants worth documenting.
+
+#### Variant A: single PWM (`MOZZI_OUTPUT_PWM`)
+
+This is the simpler option. It uses one PWM output pin and a basic RC low-pass filter.
+
+Typical Nano-style example:
+
+- PWM output from **D9**
+- **R1 = 270 ohm** in series with the output
+- **C1 = 100 nF** from the filtered output node to ground
+- audio taken from the filtered output node and ground
+
+![Single PWM output filter schematic](17-audio-single-pwm-schematic.png)
+
+This is the easiest output stage to build and debug. It is a good choice for quick testing, for simple headphone or amplified-speaker experiments, and for ports where you want to start with the least hardware.
+
+#### Variant B: two-pin PWM (`MOZZI_OUTPUT_2PIN_PWM`, formerly `HIFI`)
+
+This is the classic higher-quality dual-PWM network used by old Mozzi Nano builds and by the original eChanter-style approach.
+
+In the original Nano-style wiring shown here:
+
+- one PWM output goes through **R1 = 499k 0.5%**
+- the other PWM output goes through **R2 = 3.9k 0.5%**
+- **C1 = 4.7 nF** goes from the mixed output node to ground
+- audio is taken from the mixed output node and ground
+
+On the Arduino Nano / ATmega328P example shown in the schematic, the two PWM pins are **D10** and **D9**.
+
+![Two-pin PWM / old HIFI output schematic](18-audio-2pin-pwm-schematic.png)
+
+Practical note:
+
+- if you cannot find a **499k** resistor, two matched **1M** resistors in parallel are a reasonable substitute
+- choose resistors carefully if possible, because this network depends on ratio accuracy more than the simple single-PWM filter does
+- on modern non-AVR targets, always verify the actual Mozzi output mode and default pins for that board instead of assuming the Nano pinout
+
 ### Practical advice
 
 - keep the jack wiring short
@@ -197,50 +271,19 @@ This Nano build uses a compact headphone jack sub-assembly with passive parts so
 
 ---
 
-## 7. Power system
+## 8. Pressure sensor support
 
-This build uses a single-cell battery holder feeding a small boost converter, then a switch, then the Nano.
+The archived eChanter guide included a pressure sensor input.
 
-A simple order is:
+**The current eBaghet repository does not support a pressure sensor yet.**
 
-1. connect the battery holder to the boost converter input
-2. connect the boost converter output to the switch and board power lines
-3. verify a stable 5 V output before connecting the Arduino
-4. mount the battery holder and converter in one end section
+Pressure sensing may be added in the future, but for now it should be considered **not yet implemented** in the project.
 
-### Battery holder and boost converter
+So for the current build guide:
 
-![Battery holder and boost converter](04-battery-and-boost-converter.jpg)
-
-### Good habits
-
-- check polarity every time before powering up
-- insulate exposed solder joints
-- do not force the battery holder into the tube if it stresses the wires
-
----
-
-## 8. Pressure sensor
-
-The archived eChanter guide used a 5 V pressure sensor read by an Arduino analog input.
-
-In this build, the pressure sensor board is mounted at the opposite end of the chanter from the Arduino, with wires routed back through the tube. A side-mounted switch is also fitted in this area.
-
-### Routing the pressure sensor and switch
-
-![Pressure sensor and switch wiring being routed into the body](05-pressure-sensor-and-switch-routing.jpg)
-
-### Pressure sensor mounted in the end section
-
-![Pressure sensor mounted at the top end of the body](06-pressure-sensor-mounted.jpg)
-
-For the future eBaghet roadmap, pressure sensing matters even more because newer versions are expected to support:
-
-- a more realistic bag pressure model
-- pressure-dependent pitch variation
-- newer sensors such as the **MPXV7002** family
-
-So for a new build, it is sensible to leave extra room and wiring flexibility at the pressure-sensor end.
+- there is **no required pressure sensor wiring**
+- there is **no supported pressure sensor assembly step**
+- any pressure-sensor hardware should be treated as an experimental custom modification, not as part of the standard build
 
 ---
 
@@ -260,8 +303,7 @@ A good practical order is:
 10. test every finger input
 11. test audio
 12. test power switching
-13. test pressure input
-14. only then glue or secure the parts in place
+13. only then glue or secure the parts in place
 
 ---
 
@@ -291,7 +333,6 @@ It is enough to:
 
 - prove the software and finger logic
 - test audio on real hardware
-- experiment with pressure input
 - provide a cheap mechanical platform before moving to better enclosures or more advanced electronics
 
 If you build a more modern version of eBaghet on STM32, Teensy or ESP32-S3, this same mechanical layout can still be a useful first prototype even if the internal electronics change significantly.
