@@ -3,7 +3,7 @@
  *   what mode to the finger sensors. Can be one of:
  *		TOUCH_SWITCH	standard pushbuttons
  *		TOUCH_CAP		capacitive sensors
- *		TOUCH_MP121		Adafruit MP121 board
+ *		TOUCH_MPR121	Adafruit MPR121 board
  *
  * USE_16BIT_SAMPLES
  *  define this to true to use high resolution samples
@@ -117,10 +117,27 @@
 #define TOUCH_SWITCH	0
 #define TOUCH_CAP		1
 #define TOUCH_MPR121	2
-// NOTE: for MP121 to work with Arduino, twi_nonblock.h and twi_nonblock.cpp must be deleted from Mozzi library!
-// NOTE: TOUCH_CAP is not working with STM32
-#define TOUCHMODE TOUCH_CAP
+// NOTE: On current AVR cores / Mozzi versions, TOUCH_MPR121 may work without
+// removing twi_nonblock.* from Mozzi.
+// If you get I2C/Wire linker conflicts (for example multiple-definition ISR
+// errors involving twi_nonblock and Wire), try removing or disabling
+// twi_nonblock.h / twi_nonblock.cpp from the installed Mozzi library.
+#define TOUCHMODE TOUCH_MPR121
 #define CAPTOUCH_TRIGGER 3
+
+// NOTE: TOUCH_CAP currently works only on AVR.
+// It is not working on STM32 and is not supported on newer cores
+// such as Teensy 4.x / ESP32. Use TOUCH_SWITCH or TOUCH_MPR121 there.
+
+#if defined(__AVR__)
+#define EBAGHET_TOUCH_CAP_SUPPORTED 1
+#else
+#define EBAGHET_TOUCH_CAP_SUPPORTED 0
+#endif
+
+#if (TOUCHMODE == TOUCH_CAP) && !EBAGHET_TOUCH_CAP_SUPPORTED
+#error "TOUCH_CAP is currently supported only on AVR. Use TOUCH_SWITCH or TOUCH_MPR121 on this core."
+#endif
 
 // relative volumes 1-8
 #define GHB_CHANTER_VOLUME	8
